@@ -10,7 +10,7 @@ import React from 'react'
 
 function Menu() {
   return (
-    <div className="fixed left-0 w-52 bg-gray-900 text-white p-4 h-full shadow-md"> 
+    <div className="fixed left-0 w-52 p-4 h-full bg-white dark:bg-[#1a1a1a] border-r border-gray-300 dark:border-gray-700 shadow-md"> 
         <h2 className="text-xl font-semibold mb-4">Menú</h2>
         <Accordion type="single" collapsible className="space-y-2">
           <AccordionItem value="item-1">
