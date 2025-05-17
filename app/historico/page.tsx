@@ -7,7 +7,7 @@ function Historico() {
   return (
     <div > 
       < Header/>
-      <Menu />
+      <Menu />      
     </div>
   )
 }
