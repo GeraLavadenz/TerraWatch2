@@ -13,7 +13,7 @@ function Dashboard() {
       <AlertSection/>
       <div className='h-full'>
         <ComponentPieChart/>
-        <TemperaturaChart/>
+
       </div> 
     </div>
   )
