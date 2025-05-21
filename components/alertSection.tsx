@@ -9,7 +9,7 @@ import {
 
 export function AlertSection() {
   return (
-    <div className="fixed right-0 w-52 p-4 h-full bg-white dark:bg-[#1a1a1a] border-l border-gray-300 dark:border-gray-700 shadow-md">
+    <div className="fixed top-16 right-0 w-52 p-4 h-full bg-white dark:bg-[#1a1a1a] border-l border-gray-300 dark:border-gray-700 shadow-md">
     <Alert>
       <Terminal className="h-4 w-4" />
       <AlertTitle>Heads up!</AlertTitle>
