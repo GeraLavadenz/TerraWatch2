@@ -137,10 +137,11 @@ export function ComponentChartsInteractive() {
                   className="w-[150px]"
                   nameKey={activeChart}
                   labelFormatter={(value) =>
-                    new Date(value).toLocaleDateString("es-BO", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
+                    new Date(value).toLocaleTimeString("es-BO", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: false,
                     })
                   }
                 />
