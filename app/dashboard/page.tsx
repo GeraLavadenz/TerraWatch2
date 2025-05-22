@@ -8,7 +8,7 @@ import {TemperaturaLineChart} from '@/components/charts/Line Chart D';
 
 function Dashboard() {
   return (
-     <div className="flex flex-col min-h-screen">
+     <div className="flex flex-col min-h-screen ">
       <div className="h-16">
        <Header />
       </div>

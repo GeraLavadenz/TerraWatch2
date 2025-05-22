@@ -4,6 +4,7 @@ import Menu from '@/components/Menu';
 import Header from '@/components/header';
 import { AlertSection } from '@/components/alertSection';
 import {ComponentChartsInteractive} from '@/components/charts/Bar Chart - Interactive';
+import { ComboboxDemo } from '@/components/combobox';
 
 function Historico() {
   return (
@@ -25,7 +26,10 @@ function Historico() {
               <span className="absolute left-0 bottom-0 w-full h-1 bg-blue-500 animate-pulse"></span>
             </h1>     
           </div>
-          <ComponentChartsInteractive/>
+          <ComboboxDemo/>
+          <div className='flex-1 overflow-y-auto p-4'>
+            <ComponentChartsInteractive/>
+          </div>
         </div>
 
         <div className="w-60  border-l overflow-y-auto p-4 hidden xl:block">
