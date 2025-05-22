@@ -2,9 +2,9 @@ import React from 'react'
 import Menu from '@/components/Menu';
 import Header from '@/components/header';
 import { AlertSection } from '@/components/alertSection';
-import { ComponentPieChart } from '@/components/charts/Pie Chart - Donut with Text';
-import { HumedadChart } from '@/components/charts/Radial Chart - Stacked';
-import "../dashboard/dashboard.css"
+import { ComponentPieChart } from '@/components/charts/Pie Chart - Donut with Text D';
+import { HumedadChart } from '@/components/charts/Radial Chart - Stacked D';
+import {TemperaturaLineChart} from '@/components/charts/Line Chart D';
 
 function Dashboard() {
   return (
@@ -26,6 +26,7 @@ function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ComponentPieChart />
             <HumedadChart />
+            <TemperaturaLineChart/>
           </div>
         </div>
 

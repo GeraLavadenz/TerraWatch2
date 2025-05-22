@@ -1,7 +1,9 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { TrendingUp } from "lucide-react"
 import { Label, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts"
+import { getDatabase, ref, onValue } from "firebase/database"
 
 import {
   Card,
@@ -17,27 +19,47 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-const chartData = [{ month: "january", desktop: 1260, mobile: 570 }]
-
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "hsl(var(--chart-1))",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "hsl(var(--chart-2))",
-  },
-} satisfies ChartConfig
 
 export function HumedadChart() {
-  const totalVisitors = chartData[0].desktop + chartData[0].mobile
+  const [humedad, setHumedad] = useState(0)
+
+  useEffect(() => {
+    const db = getDatabase()
+    const humedadRef = ref(db, "sensores/humedadTierra") // ⚠️ ajusta esta ruta
+    const unsubscribe = onValue(humedadRef, (snapshot) => {
+      const val = snapshot.val()
+      if (typeof val === "number" && val >= 0 && val <= 100) {
+        setHumedad(val)
+      }
+    })
+    return () => unsubscribe()
+  }, [])
+
+  const color =
+    humedad >= 70 ? "#4ade80" : humedad >= 40 ? "#facc15" : "#ef4444" // verde, amarillo, rojo
+
+  const chartData = [
+    {
+      humedad: humedad,
+      restante: 100 - humedad,
+    },
+  ]
+
+  const chartConfig = {
+    humedad: {
+      label: "Humedad",
+      color,
+    },
+    restante: {
+      color: "#e5e7eb",
+    },
+  } satisfies ChartConfig
 
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Radial Chart - Stacked</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Humedad del Suelo</CardTitle>
+        <CardDescription>Actualizado en tiempo real</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 items-center pb-0">
         <ChartContainer
@@ -65,14 +87,14 @@ export function HumedadChart() {
                           y={(viewBox.cy || 0) - 16}
                           className="fill-foreground text-2xl font-bold"
                         >
-                          {totalVisitors.toLocaleString()}
+                          {humedad}%
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 4}
                           className="fill-muted-foreground"
                         >
-                          Visitors
+                          Humedad
                         </tspan>
                       </text>
                     )
@@ -81,28 +103,28 @@ export function HumedadChart() {
               />
             </PolarRadiusAxis>
             <RadialBar
-              dataKey="desktop"
+              dataKey="humedad"
               stackId="a"
+              fill={color}
               cornerRadius={5}
-              fill="var(--color-desktop)"
               className="stroke-transparent stroke-2"
             />
             <RadialBar
-              dataKey="mobile"
-              fill="var(--color-mobile)"
+              dataKey="restante"
               stackId="a"
-              cornerRadius={5}
+              fill="#e5e7eb"
               className="stroke-transparent stroke-2"
+              cornerRadius={5}
             />
           </RadialBarChart>
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+          Último valor registrado <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          Valor entre 0% (seco) y 100% (muy húmedo)
         </div>
       </CardFooter>
     </Card>
