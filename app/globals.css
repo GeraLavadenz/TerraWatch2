@@ -120,3 +120,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("/image/fondo-header.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.45;
+  z-index: -1;
+}
+
