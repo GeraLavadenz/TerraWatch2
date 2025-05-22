@@ -11,7 +11,7 @@ function Header() {
         width={80}
         height={50}        
         />
-        <h1  className="text-2xl font-semibold text-500 tracking-wide">TerraNova</h1>
+        <h1  className="text-2xl font-semibold text-500 tracking-wide">TerraWatch</h1>
       </header>
     </div>  
   )
