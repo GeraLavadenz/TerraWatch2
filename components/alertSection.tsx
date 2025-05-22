@@ -11,33 +11,51 @@ import {
 } from "@/components/ui/alert"
 
 export function AlertSection() {
-  const [lluvia, setLluvia] = useState("Cargando...")
-  const [lluviaProlongada, setLluviaProlongada] = useState("Cargando...")
-  const [humedad, setHumedad] = useState("Cargando...")
+  const [lluvia, setLluvia] = useState<string | null>("Cargando...")
+  const [lluviaProlongada, setLluviaProlongada] = useState<string | null>("Cargando...")
+  const [humedad, setHumedad] = useState<string | null>("Cargando...")
 
   useEffect(() => {
-    const db = getDatabase()
+    try {
+      const db = getDatabase()
 
-    const refLluvia = ref(db, "alertas/lluvia")
-    const refLluviaProlongada = ref(db, "alertas/lluvia_prolongada")
-    const refHumedad = ref(db, "alertas/humedad")
+      onValue(ref(db, "alertas/lluvia"), (snap) => {
+        if (snap.exists()) {
+          setLluvia(snap.val())
+        } else {
+          setLluvia("Sin datos")
+        }
+      }, (error) => {
+        console.error("Error leyendo lluvia:", error)
+        setLluvia("Error")
+      })
 
-    const unsubLluvia = onValue(refLluvia, (snap) => {
-      setLluvia(snap.exists() ? snap.val() : "Sin datos")
-    })
+      onValue(ref(db, "alertas/lluvia_prolongada"), (snap) => {
+        if (snap.exists()) {
+          setLluviaProlongada(snap.val())
+        } else {
+          setLluviaProlongada("Sin datos")
+        }
+      }, (error) => {
+        console.error("Error leyendo lluvia_prolongada:", error)
+        setLluviaProlongada("Error")
+      })
 
-    const unsubLluviaProlongada = onValue(refLluviaProlongada, (snap) => {
-      setLluviaProlongada(snap.exists() ? snap.val() : "Sin datos")
-    })
-
-    const unsubHumedad = onValue(refHumedad, (snap) => {
-      setHumedad(snap.exists() ? snap.val() : "Sin datos")
-    })
-
-    return () => {
-      unsubLluvia()
-      unsubLluviaProlongada()
-      unsubHumedad()
+      onValue(ref(db, "alertas/humedad"), (snap) => {
+        if (snap.exists()) {
+          setHumedad(snap.val())
+        } else {
+          setHumedad("Sin datos")
+        }
+      }, (error) => {
+        console.error("Error leyendo humedad:", error)
+        setHumedad("Error")
+      })
+    } catch (err) {
+      console.error("Error global en alertas:", err)
+      setLluvia("Error")
+      setLluviaProlongada("Error")
+      setHumedad("Error")
     }
   }, [])
 
