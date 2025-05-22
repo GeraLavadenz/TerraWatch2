@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Menu from '@/components/Menu';
 import Header from '@/components/header';
 import { AlertSection } from '@/components/alertSection';
-//import ComponentChartsInteractive from 'components/charts/Bar Chart - Interactive';
+import {ComponentChartsInteractive} from '@/components/charts/Bar Chart - Interactive';
 
 function Historico() {
   return (
@@ -23,9 +23,9 @@ function Historico() {
             <h1 className="text-3xl font-bold text-neutral-800 dark:text-neutral-100 mb-5 relative inline-block">
               📈 Histórico
               <span className="absolute left-0 bottom-0 w-full h-1 bg-blue-500 animate-pulse"></span>
-            </h1>
-
+            </h1>     
           </div>
+          <ComponentChartsInteractive/>
         </div>
 
         <div className="w-60  border-l overflow-y-auto p-4 hidden xl:block">

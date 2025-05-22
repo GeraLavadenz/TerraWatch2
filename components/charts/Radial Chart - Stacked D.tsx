@@ -25,7 +25,7 @@ export function HumedadChart() {
 
   useEffect(() => {
     const db = getDatabase()
-    const humedadRef = ref(db, "sensores/humedadTierra") // ⚠️ ajusta esta ruta
+    const humedadRef = ref(db, "lecturas_actuales/humedad_suelo_porcentaje") // ⚠️ ajusta esta ruta
     const unsubscribe = onValue(humedadRef, (snapshot) => {
       const val = snapshot.val()
       if (typeof val === "number" && val >= 0 && val <= 100) {
