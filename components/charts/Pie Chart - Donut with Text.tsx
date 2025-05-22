@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
+import '@/lib/firebase.ts'
 import { TrendingUp } from "lucide-react"
 import { Label, Pie, PieChart } from "recharts"
-
+import { getDatabase, ref, onValue } from "firebase/database"
 import {
   Card,
   CardContent,
@@ -18,31 +19,44 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  
-]
-
-const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  chrome: {
-    label: "Chrome",
-    color: "hsl(var(--chart-1))",
-  },
-  } satisfies ChartConfig
 
 export function ComponentPieChart() {
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0)
+  const [rainValue, setRainValue] = React.useState(0)
+
+  React.useEffect(() => {
+    const db = getDatabase()
+    const rainRef = ref(db, "sensores/lluvia") // ⚠️ ajusta la ruta según tu base
+    const unsubscribe = onValue(rainRef, (snapshot) => {
+      const val = snapshot.val()
+      if (typeof val === "number" && val >= 0 && val <= 100) {
+        setRainValue(val)
+      }
+    })
+    return () => unsubscribe()
   }, [])
+
+  const color =
+    rainValue < 30
+      ? "#4ade80" // verde
+      : rainValue < 70
+      ? "#facc15" // amarillo
+      : "#ef4444" // rojo
+
+  const chartData = [
+    { label: "Lluvia", visitors: rainValue, fill: color },
+    { label: "Restante", visitors: 100 - rainValue, fill: "#e5e7eb" },
+  ]
+
+  const chartConfig = {
+    lluvia: { label: "Lluvia", color },
+    restante: { color: "#e5e7eb" },
+  } satisfies ChartConfig
 
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
         <CardTitle>Intensidad de lluvia</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardDescription>Últimos datos en tiempo real</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -57,7 +71,7 @@ export function ComponentPieChart() {
             <Pie
               data={chartData}
               dataKey="visitors"
-              nameKey="browser"
+              nameKey="label"
               innerRadius={60}
               strokeWidth={5}
             >
@@ -76,14 +90,14 @@ export function ComponentPieChart() {
                           y={viewBox.cy}
                           className="fill-foreground text-3xl font-bold"
                         >
-                          {totalVisitors.toLocaleString()}
+                          {rainValue}%
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
                           className="fill-muted-foreground"
                         >
-                          Visitors
+                          Lluvia
                         </tspan>
                       </text>
                     )
@@ -96,10 +110,10 @@ export function ComponentPieChart() {
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+          Última actualización en tiempo real <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          Valor actual sobre una escala de 100%
         </div>
       </CardFooter>
     </Card>

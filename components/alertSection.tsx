@@ -9,7 +9,7 @@ import {
 
 export function AlertSection() {
   return (
-    <div className="fixed top-16 right-0 w-52 p-4 h-full bg-white dark:bg-[#1a1a1a] border-l border-gray-300 dark:border-gray-700 shadow-md">
+    <div className="fixed top-16 right-0 w-60 p-4 h-full bg-white dark:bg-[#1a1a1a] border-l border-gray-300 dark:border-gray-700 shadow-md">
     <h1 className="text-xl font-semibold mb-4">Alertas</h1>
     <div>
     <h2>Lluvia</h2>

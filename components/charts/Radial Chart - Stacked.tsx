@@ -30,7 +30,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function TemperaturaChart() {
+export function HumedadChart() {
   const totalVisitors = chartData[0].desktop + chartData[0].mobile
 
   return (
