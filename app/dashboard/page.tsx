@@ -2,9 +2,9 @@ import React from 'react'
 import Menu from '@/components/Menu';
 import Header from '@/components/header';
 import { AlertSection } from '@/components/alertSection';
-import { ComponentPieChart } from '@/components/charts/Pie Chart - Donut with Text D';
-import { HumedadChart } from '@/components/charts/Radial Chart - Stacked D';
-import {TemperaturaLineChart} from '@/components/charts/Line Chart D';
+import { ComponentPieChart } from '@/components/charts/dashboard/Pie Chart - Donut with Text D';
+import { HumedadChart } from '@/components/charts/dashboard/Radial Chart - Stacked D';
+import {TemperaturaLineChart} from '@/components/charts/dashboard/Line Chart D';
 
 function Dashboard() {
   return (

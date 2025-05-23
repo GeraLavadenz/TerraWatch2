@@ -30,8 +30,6 @@ function Historico() {
             </h1>
           </div>
 
-          <ComboboxDemo />
-
           {/* Gráfico */}
           <div className="flex-1 overflow-auto mt-4">
             <ComponentChartsInteractive />

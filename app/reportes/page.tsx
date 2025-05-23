@@ -13,7 +13,7 @@ function Reportes() {
       </div>
         
         <div className="flex flex-1 overflow-hidden">
-        <div className="w-52 border-r overflow-y-auto">
+        <div className="w-26 xl:w-52 border-r overflow-y-auto">
           <Menu />
         </div>
 
@@ -25,7 +25,7 @@ function Reportes() {
 
         </div>
 
-        <div className="w-60  border-l overflow-y-auto p-4 hidden xl:block">
+        <div className="w-40 xl:w-60  border-l overflow-y-auto p-4 hidden xl:block">
           <AlertSection />
         </div>
       </div>
