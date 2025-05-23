@@ -14,6 +14,7 @@ function Menu() {
       <h2 className="hidden xl:block text-xl font-semibold mb-4">Menú</h2>
 
       <Accordion type="single" collapsible className="space-y-2">
+        {/* Dashboard */}
         <AccordionItem value="item-1">
           <AccordionTrigger className="hover:bg-gray-700 p-2 rounded flex items-center justify-center xl:justify-start space-x-2">
             <Link href="/dashboard" className="flex items-center space-x-2">
@@ -23,6 +24,7 @@ function Menu() {
           </AccordionTrigger>
         </AccordionItem>
 
+        {/* Histórico */}
         <AccordionItem value="item-2">
           <AccordionTrigger className="hover:bg-gray-700 p-2 rounded flex items-center justify-center xl:justify-start space-x-2">
             <Link href="/historico" className="flex items-center space-x-2">
