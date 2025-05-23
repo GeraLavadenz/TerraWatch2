@@ -74,6 +74,8 @@ export function ComponentPieChart() {
               nameKey="label"
               innerRadius={60}
               strokeWidth={5}
+              startAngle={180}
+              endAngle={-180}
             >
               <Label
                 content={({ viewBox }) => {

@@ -22,7 +22,6 @@ function Reportes() {
             📊 Reportes
             <span className="absolute left-0 bottom-0 w-full h-1 bg-indigo-500 animate-pulse"></span>
           </h1>
-
         </div>
 
         <div className="w-40 xl:w-60  border-l overflow-y-auto p-4 hidden xl:block">
