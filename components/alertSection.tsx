@@ -60,7 +60,7 @@ export function AlertSection() {
   }, [])
 
   return (
-    <div className="fixed top-16 right-0 w-72 p-4 h-full bg-white dark:bg-[#1a1a1a] border-l border-gray-300 dark:border-gray-700 shadow-md overflow-y-auto">
+    <div className="fixed top-16 right-0 w-40 xl:w-60 p-4 h-full bg-white dark:bg-[#1a1a1a] border-l border-gray-300 dark:border-gray-700 shadow-md overflow-y-auto">
       <h1 className="text-2xl font-bold mb-4 text-blue-700 dark:text-blue-300">🚨 Alertas del sistema</h1>
 
       <section className="mb-6">
