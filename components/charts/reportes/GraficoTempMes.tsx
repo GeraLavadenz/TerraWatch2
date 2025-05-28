@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TrendingUp } from "lucide-react"
+//import { TrendingUp } from "lucide-react"
 import { getDatabase, ref, onValue } from "firebase/database"
 import { Bar, BarChart, CartesianGrid, Cell, LabelList } from "recharts"
 

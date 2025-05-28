@@ -8,14 +8,14 @@ import Menu from "@/components/Menu"
 import { AlertSection } from "@/components/alertSection"
 
 // Gráficos por día
-import GraficoTempDia from "@/components/charts/GraficoLluviaDia"
-import GraficoHumedadDia from "@/components/charts/GraficoHumedadDia"
-import GraficoLluviaDia from "@/components/charts/GraficoLluviaDia"
+import GraficoTempDia from "@/components/charts/reportes/GraficoLluviaDia"
+import GraficoHumedadDia from "@/components/charts/reportes/GraficoHumedadDia"
+import GraficoLluviaDia from "@/components/charts/reportes/GraficoLluviaDia"
 
 // Gráficos por mes
-import GraficoTempMes from "@/components/charts/GraficoLluviaMes"
-import GraficoHumedadMes from "@/components/charts/GraficoHumedadMes"
-import GraficoLluviaMes from "@/components/charts/GraficoLluviaMes"
+import GraficoTempMes from "@/components/charts/reportes/GraficoLluviaMes"
+import GraficoHumedadMes from "@/components/charts/reportes/GraficoHumedadMes"
+import GraficoLluviaMes from "@/components/charts/reportes/GraficoLluviaMes"
 
 export default function Reportes() {
   const [tipo, setTipo] = useState<"día" | "mes">("día")

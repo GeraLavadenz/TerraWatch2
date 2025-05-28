@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+//import { TrendingUp } from "lucide-react"
 import { getDatabase, ref, onValue } from "firebase/database"
+import { Bar, BarChart, CartesianGrid, Cell, LabelList } from "recharts"
 
 import {
   Card, CardHeader, CardTitle, CardDescription,
@@ -14,13 +14,10 @@ import {
 } from "@/components/ui/chart"
 
 const chartConfig = {
-  valor: {
-    label: "Humedad",
-    color: "hsl(var(--chart-1))",
-  }
+  temperatura: { label: "Temperatura (°C)" },
 } satisfies ChartConfig
 
-export default function GraficoHumedadDia({ fecha }: { fecha: string }) {
+export default function GraficoTempDia({ fecha }: { fecha: string }) {
   const [datos, setDatos] = useState<any[]>([])
 
   useEffect(() => {
@@ -31,7 +28,7 @@ export default function GraficoHumedadDia({ fecha }: { fecha: string }) {
       const data = snapshot.val() || {}
       const formateado = Object.entries(data).map(([hora, valores]: any) => ({
         hora,
-        valor: valores.humedad_suelo || 0
+        temperatura: valores.temperatura || 0,
       }))
       setDatos(formateado)
     })
@@ -40,21 +37,35 @@ export default function GraficoHumedadDia({ fecha }: { fecha: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>💧 Humedad por hora</CardTitle>
+        <CardTitle>🌡️ Temperatura por hora</CardTitle>
         <CardDescription>{fecha}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <BarChart accessibilityLayer data={datos}>
             <CartesianGrid vertical={false} />
-            <XAxis dataKey="hora" tickLine={false} tickMargin={10} axisLine={false} />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
-            <Bar dataKey="valor" fill="var(--color-valor)" radius={4} />
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent hideLabel hideIndicator />}
+            />
+            <Bar dataKey="temperatura">
+              <LabelList position="top" dataKey="hora" fillOpacity={1} />
+              {datos.map((item, index) => (
+                <Cell
+                  key={index}
+                  fill={
+                    item.temperatura >= 0
+                      ? "hsl(var(--chart-1))"
+                      : "hsl(var(--chart-2))"
+                  }
+                />
+              ))}
+            </Bar>
           </BarChart>
         </ChartContainer>
       </CardContent>
       <CardFooter className="text-sm text-muted-foreground">
-        Humedad registrada por hora en el día seleccionado.
+        Temperatura registrada hora por hora.
       </CardFooter>
     </Card>
   )

@@ -1,6 +1,6 @@
 import {
   Accordion,
-  AccordionContent,
+  //AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
