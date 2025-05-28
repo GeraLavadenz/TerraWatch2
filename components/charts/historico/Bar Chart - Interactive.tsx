@@ -19,8 +19,16 @@ const chartConfig = {
   lluvia: { label: "Lluvia (%)", color: "#0f7176" },
 } satisfies ChartConfig
 
+type SensorData = {
+  date: string;
+  temperatura: number;
+  humedad: number;
+  lluvia: number;
+};
+
+
 export function ComponentChartsInteractive() {
-  const [chartData, setChartData] = React.useState<any[]>([])
+  const [chartData, setChartData] = React.useState<SensorData[]>([])
   const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("temperatura")
   const [total, setTotal] = React.useState({ temperatura: 0, humedad: 0, lluvia: 0 })
 
