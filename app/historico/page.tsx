@@ -1,10 +1,9 @@
 import React from 'react'
-import Link from 'next/link';
 import Menu from '@/components/Menu';
 import Header from '@/components/header';
 import { AlertSection } from '@/components/alertSection';
 import {ComponentChartsInteractive} from '@/components/charts/historico/Bar Chart - Interactive';
-import { ComboboxDemo } from '@/components/ui/combobox';
+
 
 function Historico() {
   return (

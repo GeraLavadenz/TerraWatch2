@@ -46,10 +46,7 @@ export function HumedadChart() {
   ]
 
   const chartConfig = {
-    humedad: {
-      label: "Humedad",
-      color,
-    },
+   
     restante: {
       color: "#e5e7eb",
     },
