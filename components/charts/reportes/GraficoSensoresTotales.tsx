@@ -52,6 +52,12 @@ interface Horas {
   [hora: string]: Lectura
 }
 
+interface Suma {
+  temperatura: number
+  humedad: number
+  lluvia: number
+}
+
 interface DatosDia {
   date: string
   temperatura: number
@@ -73,7 +79,7 @@ export function GraficoSensoresTotales() {
         const h = horas as Horas
         const lecturas = Object.values(h)
         const n = lecturas.length
-        const suma = lecturas.reduce(
+        const suma = lecturas.reduce<Suma>(
           (acc, val) => {
             acc.temperatura += val.temperatura ?? 0
             acc.humedad += val.humedad_suelo ?? 0
