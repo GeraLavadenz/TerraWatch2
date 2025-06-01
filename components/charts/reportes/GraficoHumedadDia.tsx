@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-//import { TrendingUp } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { getDatabase, ref, onValue } from "firebase/database"
 
@@ -20,8 +19,17 @@ const chartConfig = {
   }
 } satisfies ChartConfig
 
+interface Lectura {
+  hora: string
+  valor: number
+}
+
+type Valores = {
+  humedad_suelo?: number
+}
+
 export default function GraficoHumedadDia({ fecha }: { fecha: string }) {
-  const [datos, setDatos] = useState<any[]>([])
+  const [datos, setDatos] = useState<Lectura[]>([])
 
   useEffect(() => {
     const db = getDatabase()
@@ -29,10 +37,13 @@ export default function GraficoHumedadDia({ fecha }: { fecha: string }) {
 
     onValue(ruta, (snapshot) => {
       const data = snapshot.val() || {}
-      const formateado = Object.entries(data).map(([hora, valores]: any) => ({
-        hora,
-        valor: valores.humedad_suelo || 0
-      }))
+      const formateado = Object.entries(data).map(([hora, valores]) => {
+        const v = valores as Valores
+        return {
+          hora,
+          valor: v.humedad_suelo ?? 0,
+        }
+      })
       setDatos(formateado)
     })
   }, [fecha])

@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-//import { TrendingUp } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { getDatabase, ref, onValue } from "firebase/database"
 
@@ -20,8 +19,21 @@ const chartConfig = {
   }
 } satisfies ChartConfig
 
+interface Lectura {
+  humedad_suelo?: number
+}
+
+interface Horas {
+  [hora: string]: Lectura
+}
+
+interface DiaResumen {
+  fecha: string
+  valor: number
+}
+
 export default function GraficoHumedadMes({ mes }: { mes: string }) {
-  const [datos, setDatos] = useState<any[]>([])
+  const [datos, setDatos] = useState<DiaResumen[]>([])
 
   useEffect(() => {
     const db = getDatabase()
@@ -31,8 +43,9 @@ export default function GraficoHumedadMes({ mes }: { mes: string }) {
       const data = snapshot.val() || {}
       const diasDelMes = Object.entries(data).filter(([fecha]) => fecha.startsWith(mes))
 
-      const resumen = diasDelMes.map(([fecha, horas]: any) => {
-        const lecturas = Object.values(horas).map((lectura: any) => lectura.humedad_suelo || 0)
+      const resumen = diasDelMes.map(([fecha, horas]) => {
+        const h = horas as Horas
+        const lecturas = Object.values(h).map(lectura => lectura.humedad_suelo ?? 0)
         const promedio = lecturas.length > 0
           ? lecturas.reduce((a, b) => a + b, 0) / lecturas.length
           : 0
@@ -65,4 +78,3 @@ export default function GraficoHumedadMes({ mes }: { mes: string }) {
     </Card>
   )
 }
-
