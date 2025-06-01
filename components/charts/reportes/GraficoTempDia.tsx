@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-//import { TrendingUp } from "lucide-react"
 import { getDatabase, ref, onValue } from "firebase/database"
 import { Bar, BarChart, CartesianGrid, Cell, LabelList } from "recharts"
 
@@ -18,7 +17,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export default function GraficoTempDia({ fecha }: { fecha: string }) {
-  const [datos, setDatos] = useState<any[]>([])
+  const [datos, setDatos] = useState<LecturaHora[]>([])
 
   useEffect(() => {
     const db = getDatabase()
@@ -26,10 +25,13 @@ export default function GraficoTempDia({ fecha }: { fecha: string }) {
 
     onValue(ruta, (snapshot) => {
       const data = snapshot.val() || {}
-      const formateado = Object.entries(data).map(([hora, valores]: any) => ({
-        hora,
-        temperatura: valores.temperatura || 0,
-      }))
+      const formateado = Object.entries(data).map(([hora, valores]) => {
+        const v = valores as { temperatura?: number }
+        return {
+          hora,
+          temperatura: v.temperatura ?? 0,
+        }
+      })
       setDatos(formateado)
     })
   }, [fecha])

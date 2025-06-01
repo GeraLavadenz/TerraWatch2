@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-//import { TrendingUp } from "lucide-react"
 import { getDatabase, ref, onValue } from "firebase/database"
 import { Bar, BarChart, CartesianGrid, Cell, LabelList } from "recharts"
 
@@ -17,8 +16,21 @@ const chartConfig = {
   temperatura: { label: "Temperatura (°C)" },
 } satisfies ChartConfig
 
+interface Lectura {
+  temperatura?: number
+}
+
+interface Horas {
+  [hora: string]: Lectura
+}
+
+interface DiaTemperatura {
+  fecha: string
+  temperatura: number
+}
+
 export default function GraficoTempMes({ mes }: { mes: string }) {
-  const [datos, setDatos] = useState<any[]>([])
+  const [datos, setDatos] = useState<DiaTemperatura[]>([])
 
   useEffect(() => {
     const db = getDatabase()
@@ -28,8 +40,9 @@ export default function GraficoTempMes({ mes }: { mes: string }) {
       const data = snapshot.val() || {}
       const diasDelMes = Object.entries(data).filter(([fecha]) => fecha.startsWith(mes))
 
-      const formateado = diasDelMes.map(([fecha, horas]: any) => {
-        const temps = Object.values(horas).map((lectura: any) => lectura.temperatura || 0)
+      const formateado = diasDelMes.map(([fecha, horas]) => {
+        const h = horas as Horas
+        const temps = Object.values(h).map(lectura => lectura.temperatura ?? 0)
         const promedio = temps.length > 0
           ? temps.reduce((a, b) => a + b, 0) / temps.length
           : 0
