@@ -42,9 +42,26 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+interface Lectura {
+  temperatura?: number
+  humedad_suelo?: number
+  lluvia?: number
+}
+
+interface Horas {
+  [hora: string]: Lectura
+}
+
+interface DatosDia {
+  date: string
+  temperatura: number
+  humedad: number
+  lluvia: number
+}
+
 export function GraficoSensoresTotales() {
   const [timeRange, setTimeRange] = React.useState("30d")
-  const [datos, setDatos] = React.useState<any[]>([])
+  const [datos, setDatos] = React.useState<DatosDia[]>([])
 
   React.useEffect(() => {
     const db = getDatabase()
@@ -52,23 +69,24 @@ export function GraficoSensoresTotales() {
 
     onValue(lecturasRef, (snapshot) => {
       const data = snapshot.val() || {}
-      const entradas = Object.entries(data).map(([fecha, horas]: any) => {
-        const lecturas = Object.values(horas)
+      const entradas = Object.entries(data).map(([fecha, horas]) => {
+        const h = horas as Horas
+        const lecturas = Object.values(h)
         const n = lecturas.length
         const suma = lecturas.reduce(
-          (acc: any, val: any) => {
-            acc.temperatura += val.temperatura || 0
-            acc.humedad += val.humedad_suelo || 0
-            acc.lluvia += val.lluvia || 0
+          (acc, val) => {
+            acc.temperatura += val.temperatura ?? 0
+            acc.humedad += val.humedad_suelo ?? 0
+            acc.lluvia += val.lluvia ?? 0
             return acc
           },
           { temperatura: 0, humedad: 0, lluvia: 0 }
         )
         return {
           date: fecha,
-          temperatura: +(suma.temperatura / n).toFixed(1),
-          humedad: +(suma.humedad / n).toFixed(1),
-          lluvia: +(suma.lluvia / n).toFixed(1),
+          temperatura: n > 0 ? +(suma.temperatura / n).toFixed(1) : 0,
+          humedad: n > 0 ? +(suma.humedad / n).toFixed(1) : 0,
+          lluvia: n > 0 ? +(suma.lluvia / n).toFixed(1) : 0,
         }
       })
       setDatos(entradas)

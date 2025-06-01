@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-//import { TrendingUp } from "lucide-react"
 import { getDatabase, ref, onValue } from "firebase/database"
 import { RadialBarChart, RadialBar } from "recharts"
 
@@ -17,8 +16,18 @@ const chartConfig = {
   lluvia: { label: "Lluvia", color: "hsl(var(--chart-1))" }
 } satisfies ChartConfig
 
+interface Valores {
+  lluvia?: number
+}
+
+interface LecturaDia {
+  hora: string
+  lluvia: number
+  fill: string
+}
+
 export default function GraficoLluviaDia({ fecha }: { fecha: string }) {
-  const [datos, setDatos] = useState<any[]>([])
+  const [datos, setDatos] = useState<LecturaDia[]>([])
 
   useEffect(() => {
     const db = getDatabase()
@@ -26,11 +35,14 @@ export default function GraficoLluviaDia({ fecha }: { fecha: string }) {
 
     onValue(ruta, (snapshot) => {
       const data = snapshot.val() || {}
-      const formateado = Object.entries(data).map(([hora, valores]: any) => ({
-        hora,
-        lluvia: valores.lluvia || 0,
-        fill: "var(--color-lluvia)"
-      }))
+      const formateado = Object.entries(data).map(([hora, valores]) => {
+        const v = valores as Valores
+        return {
+          hora,
+          lluvia: v.lluvia ?? 0,
+          fill: "var(--color-lluvia)"
+        }
+      })
       setDatos(formateado)
     })
   }, [fecha])
