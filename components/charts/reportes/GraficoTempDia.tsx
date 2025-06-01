@@ -16,6 +16,11 @@ const chartConfig = {
   temperatura: { label: "Temperatura (°C)" },
 } satisfies ChartConfig
 
+interface LecturaHora {
+  hora: string
+  temperatura: number
+}
+
 export default function GraficoTempDia({ fecha }: { fecha: string }) {
   const [datos, setDatos] = useState<LecturaHora[]>([])
 
