@@ -49,7 +49,7 @@ export function TemperaturaLineChart() {
       if (data && typeof data === "object") {
         const parsed = Object.entries(data).map(([key, val]) => ({
           tiempo: key.slice(11, 16), // formato HH:mm
-          temperatura: val,
+          temperatura: typeof val === "number" ? val : Number(val) || 0,
         }))
         setChartData(parsed)
       }
@@ -111,4 +111,3 @@ export function TemperaturaLineChart() {
     </Card>
   )
 }
-
