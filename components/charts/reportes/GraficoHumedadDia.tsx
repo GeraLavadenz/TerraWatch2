@@ -12,11 +12,12 @@ import {
   ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig
 } from "@/components/ui/chart"
 
+// Configuración de color
 const chartConfig = {
-  valor: {
-    label: "Humedad",
+  humedad_suelo: {
+    label: "Humedad del Suelo (%)",
     color: "hsl(var(--chart-1))",
-  }
+  },
 } satisfies ChartConfig
 
 interface Lectura {
@@ -37,11 +38,11 @@ export default function GraficoHumedadDia({ fecha }: { fecha: string }) {
 
     onValue(ruta, (snapshot) => {
       const data = snapshot.val() || {}
-      const formateado = Object.entries(data).map(([hora, valores]) => {
+      const formateado: Lectura[] = Object.entries(data).map(([hora, valores]) => {
         const v = valores as Valores
         return {
           hora,
-          valor: v.humedad_suelo ?? 0,
+          valor: v.humedad_suelo ?? 0,  // Si no existe humedad_suelo, se asigna 0
         }
       })
       setDatos(formateado)
@@ -58,9 +59,14 @@ export default function GraficoHumedadDia({ fecha }: { fecha: string }) {
         <ChartContainer config={chartConfig}>
           <BarChart accessibilityLayer data={datos}>
             <CartesianGrid vertical={false} />
-            <XAxis dataKey="hora" tickLine={false} tickMargin={10} axisLine={false} />
+            <XAxis
+              dataKey="hora"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+            />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
-            <Bar dataKey="valor" fill="var(--color-valor)" radius={4} />
+            <Bar dataKey="valor" fill={chartConfig.humedad_suelo.color} radius={4} />
           </BarChart>
         </ChartContainer>
       </CardContent>

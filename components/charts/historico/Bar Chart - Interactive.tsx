@@ -13,12 +13,14 @@ import {
   ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent
 } from "@/components/ui/chart"
 
+// Configuración de color
 const chartConfig = {
   temperatura: { label: "Temperatura (°C)", color: "#64551f" },
   humedad: { label: "Humedad (%)", color: "#167f1b" },
   lluvia: { label: "Lluvia (%)", color: "#0f7176" },
 } satisfies ChartConfig
 
+// Tipo para los datos obtenidos de Firebase
 type SensorData = {
   date: string;
   temperatura: number;
@@ -26,57 +28,62 @@ type SensorData = {
   lluvia: number;
 };
 
-
 export function ComponentChartsInteractive() {
   const [chartData, setChartData] = React.useState<SensorData[]>([])
   const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("temperatura")
   const [total, setTotal] = React.useState({ temperatura: 0, humedad: 0, lluvia: 0 })
 
   React.useEffect(() => {
-    const tempRef = ref(db, "historico/temperatura")
-    const humRef = ref(db, "historico/humedadSuelo")
-    const lluvRef = ref(db, "historico/lluvia")
-
+    // Referencias a los datos de cada sensor
+    const tempRef = ref(db, "lecturas")
     const fetchData = () => {
       let tempData: Record<string, number> = {}
       let humData: Record<string, number> = {}
       let lluvData: Record<string, number> = {}
 
       onValue(tempRef, (snapshot) => {
-        tempData = snapshot.val() || {}
-        onValue(humRef, (snapshot) => {
-          humData = snapshot.val() || {}
-          onValue(lluvRef, (snapshot) => {
-            lluvData = snapshot.val() || {}
-
-            const fechas = Array.from(
-              new Set([
-                ...Object.keys(tempData),
-                ...Object.keys(humData),
-                ...Object.keys(lluvData),
-              ])
-            ).sort()
-
-            const mergedData = fechas.map((fecha) => ({
-              date: fecha,
-              temperatura: tempData[fecha] ?? 0,
-              humedad: humData[fecha] ?? 0,
-              lluvia: lluvData[fecha] ?? 0,
-            }))
-
-            const totals = mergedData.reduce(
-              (acc, curr) => ({
-                temperatura: acc.temperatura + curr.temperatura,
-                humedad: acc.humedad + curr.humedad,
-                lluvia: acc.lluvia + curr.lluvia,
-              }),
-              { temperatura: 0, humedad: 0, lluvia: 0 }
-            )
-
-            setChartData(mergedData)
-            setTotal(totals)
-          })
+        const data = snapshot.val() || {}
+        let tempData: Record<string, number> = {}
+        let humData: Record<string, number> = {}
+        let lluvData: Record<string, number> = {}
+        Object.entries(data).forEach(([fecha, horasObj]) => {
+          if (typeof horasObj === "object") {
+            Object.entries(horasObj).forEach(([hora, sensores]) => {
+              tempData[fecha] = sensores.temperatura || 0
+              humData[fecha] = sensores.humedad_ambiente || 0
+              lluvData[fecha] = sensores.lluvia || 0
+            })
+          }
         })
+
+        const fechas = Array.from(
+          new Set([
+            ...Object.keys(tempData),
+            ...Object.keys(humData),
+            ...Object.keys(lluvData),
+          ])
+        ).sort()
+
+        // Merge data based on unique dates
+        const mergedData = fechas.map((fecha) => ({
+          date: fecha,
+          temperatura: tempData[fecha] || 0,
+          humedad: humData[fecha] || 0,
+          lluvia: lluvData[fecha] || 0,
+        }))
+
+        // Totals calculation
+        const totals = mergedData.reduce(
+          (acc, curr) => ({
+            temperatura: acc.temperatura + curr.temperatura,
+            humedad: acc.humedad + curr.humedad,
+            lluvia: acc.lluvia + curr.lluvia,
+          }),
+          { temperatura: 0, humedad: 0, lluvia: 0 }
+        )
+
+        setChartData(mergedData)
+        setTotal(totals)
       })
     }
 

@@ -10,7 +10,7 @@ import {
   YAxis,
   ResponsiveContainer,
 } from "recharts"
-import { getDatabase, ref, onValue } from "firebase/database"
+import { getDatabase, ref, onValue, DatabaseReference } from "firebase/database"
 
 import {
   Card,
@@ -27,6 +27,27 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 
+// Definimos tipos para Firebase data estructurada
+interface SensoresData {
+  temperatura?: number
+  humedad_ambiente?: number
+  humedad_suelo?: number
+  lluvia?: number
+}
+
+interface HorasData {
+  [hora: string]: SensoresData
+}
+
+interface LecturasData {
+  [fecha: string]: HorasData
+}
+
+interface ChartDataItem {
+  tiempo: string
+  temperatura: number
+}
+
 // Configuración de color
 const chartConfig = {
   temperatura: {
@@ -36,22 +57,37 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function TemperaturaLineChart() {
-  const [chartData, setChartData] = useState<
-    { tiempo: string; temperatura: number }[]
-  >([])
+  const [chartData, setChartData] = useState<ChartDataItem[]>([])
 
   useEffect(() => {
     const db = getDatabase()
-    const tempRef = ref(db, "historico/temperatura") // 📌 Ajusta la ruta según tu DB
+    const lecturasRef: DatabaseReference = ref(db, "lecturas")
 
-    const unsubscribe = onValue(tempRef, (snapshot) => {
-      const data = snapshot.val()
+    const unsubscribe = onValue(lecturasRef, (snapshot) => {
+      const data = snapshot.val() as LecturasData | null
       if (data && typeof data === "object") {
-        const parsed = Object.entries(data).map(([key, val]) => ({
-          tiempo: key.slice(11, 16), // formato HH:mm
-          temperatura: typeof val === "number" ? val : Number(val) || 0,
-        }))
-        setChartData(parsed)
+        const resultados: ChartDataItem[] = []
+
+        Object.entries(data).forEach(([fecha, horasObj]) => {
+          if (horasObj && typeof horasObj === "object") {
+            Object.entries(horasObj).forEach(([hora, sensores]) => {
+              if (
+                sensores &&
+                typeof sensores === "object" &&
+                typeof sensores.temperatura === "number"
+              ) {
+                resultados.push({
+                  tiempo: `${fecha} ${hora}`,
+                  temperatura: sensores.temperatura,
+                })
+              }
+            })
+          }
+        })
+
+        resultados.sort((a, b) => (a.tiempo > b.tiempo ? 1 : -1))
+
+        setChartData(resultados.slice(-50))
       }
     })
 
@@ -67,16 +103,17 @@ export function TemperaturaLineChart() {
       <CardContent className="h-[250px]">
         <ChartContainer config={chartConfig}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={chartData}
-              margin={{ left: 12, right: 12, bottom: 10 }}
-            >
+            <LineChart data={chartData} margin={{ left: 12, right: 12, bottom: 10 }}>
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="tiempo"
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
+                tickFormatter={(value) => {
+                  const parts = value.split(" ")
+                  return parts.length === 2 ? parts[1] : value
+                }}
               />
               <YAxis
                 domain={["auto", "auto"]}
@@ -85,10 +122,7 @@ export function TemperaturaLineChart() {
                 tickMargin={8}
                 unit="°C"
               />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-              />
+              <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
               <Line
                 dataKey="temperatura"
                 type="natural"

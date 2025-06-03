@@ -1,85 +1,62 @@
 "use client"
 
-import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { useEffect, useState } from "react"
 import { getDatabase, ref, onValue } from "firebase/database"
-
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  Card, CardContent, CardDescription, CardHeader, CardTitle
 } from "@/components/ui/card"
 import {
-  ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
+  ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent
 } from "@/components/ui/chart"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+// Configuración de colores de los sensores
 const chartConfig = {
-  temperatura: {
-    label: "Temperatura (°C)",
-    color: "hsl(var(--chart-1))",
-  },
-  humedad: {
-    label: "Humedad (%)",
-    color: "hsl(var(--chart-2))",
-  },
-  lluvia: {
-    label: "Lluvia (mm)",
-    color: "hsl(var(--chart-3))",
-  },
+  temperatura: { label: "Temperatura (°C)", color: "hsl(var(--chart-1))" },
+  humedad: { label: "Humedad (%)", color: "hsl(var(--chart-2))" },
+  lluvia: { label: "Lluvia (mm)", color: "hsl(var(--chart-3))" },
 } satisfies ChartConfig
 
+// Tipos de los datos de lectura por hora
 interface Lectura {
   temperatura?: number
   humedad_suelo?: number
   lluvia?: number
 }
 
+// Tipo para las horas de un día (clave: hora, valor: Lectura)
 interface Horas {
   [hora: string]: Lectura
 }
 
-interface Suma {
-  temperatura: number
-  humedad: number
-  lluvia: number
-}
-
-interface DatosDia {
-  date: string
+// Tipo para cada día con la fecha y el valor promedio de los sensores
+interface DiaResumen {
+  fecha: string
   temperatura: number
   humedad: number
   lluvia: number
 }
 
 export function GraficoSensoresTotales() {
-  const [timeRange, setTimeRange] = React.useState("30d")
-  const [datos, setDatos] = React.useState<DatosDia[]>([])
+  const [timeRange, setTimeRange] = useState("30d")
+  const [datos, setDatos] = useState<DiaResumen[]>([])
 
-  React.useEffect(() => {
+  useEffect(() => {
     const db = getDatabase()
     const lecturasRef = ref(db, "lecturas")
 
     onValue(lecturasRef, (snapshot) => {
       const data = snapshot.val() || {}
+
+      // Filtrar los días según el mes
       const entradas = Object.entries(data).map(([fecha, horas]) => {
         const h = horas as Horas
         const lecturas = Object.values(h)
         const n = lecturas.length
-        const suma = lecturas.reduce<Suma>(
+
+        // Calcular los promedios de temperatura, humedad y lluvia por día
+        const suma = lecturas.reduce(
           (acc, val) => {
             acc.temperatura += val.temperatura ?? 0
             acc.humedad += val.humedad_suelo ?? 0
@@ -88,19 +65,23 @@ export function GraficoSensoresTotales() {
           },
           { temperatura: 0, humedad: 0, lluvia: 0 }
         )
+
+        // Retornar el objeto de datos para cada día con su fecha y promedios
         return {
-          date: fecha,
+          fecha,
           temperatura: n > 0 ? +(suma.temperatura / n).toFixed(1) : 0,
           humedad: n > 0 ? +(suma.humedad / n).toFixed(1) : 0,
           lluvia: n > 0 ? +(suma.lluvia / n).toFixed(1) : 0,
         }
       })
+
       setDatos(entradas)
     })
   }, [])
 
+  // Filtrar los datos según el rango de tiempo seleccionado
   const filteredData = datos.filter((item) => {
-    const date = new Date(item.date)
+    const date = new Date(item.fecha)
     const referenceDate = new Date()
     let daysToSubtract = 30
     if (timeRange === "90d") daysToSubtract = 90
@@ -129,10 +110,7 @@ export function GraficoSensoresTotales() {
         </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
-        >
+        <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
           <AreaChart data={filteredData}>
             <defs>
               <linearGradient id="fillTemp" x1="0" y1="0" x2="0" y2="1">
@@ -151,7 +129,7 @@ export function GraficoSensoresTotales() {
 
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="date"
+              dataKey="fecha"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
@@ -202,3 +180,4 @@ export function GraficoSensoresTotales() {
     </Card>
   )
 }
+
