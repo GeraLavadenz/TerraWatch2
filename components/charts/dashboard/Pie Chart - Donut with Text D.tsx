@@ -25,7 +25,7 @@ export function ComponentPieChart() {
 
   React.useEffect(() => {
     const db = getDatabase()
-    const rainRef = ref(db, "lecturas_actuales/lluvia_porcentaje") // ⚠️ ajusta la ruta según tu base
+    const rainRef = ref(db, "lecturas_actuales/lluvia_porcentaje") 
     const unsubscribe = onValue(rainRef, (snapshot) => {
       const val = snapshot.val()
       if (typeof val === "number" && val >= 0 && val <= 100) {

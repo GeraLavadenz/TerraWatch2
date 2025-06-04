@@ -59,6 +59,7 @@ const chartConfig = {
 export function TemperaturaLineChart() {
   const [chartData, setChartData] = useState<ChartDataItem[]>([])
 
+<<<<<<< Updated upstream
   useEffect(() => {
     const db = getDatabase()
     const lecturasRef: DatabaseReference = ref(db, "lecturas")
@@ -88,11 +89,42 @@ export function TemperaturaLineChart() {
         resultados.sort((a, b) => (a.tiempo > b.tiempo ? 1 : -1))
 
         setChartData(resultados.slice(-50))
+=======
+ useEffect(() => {
+  const db = getDatabase()
+  const refLecturas = ref(db, "lecturas")
+
+  const unsubscribe = onValue(refLecturas, (snapshot) => {
+    const data = snapshot.val()
+    if (!data || typeof data !== "object") return
+
+    const resultados: { tiempo: string; temperatura: number }[] = []
+
+    Object.entries(data).forEach(([fecha, horas]) => {
+      if (typeof horas === "object") {
+        Object.entries(horas).forEach(([hora, valores]) => {
+          const temp = Number(valores?.temperatura_C)
+          if (!isNaN(temp)) {
+            resultados.push({
+              tiempo: `${fecha} ${hora}`, // o solo hora si prefieres
+              temperatura: temp,
+            })
+          }
+        })
+>>>>>>> Stashed changes
       }
     })
 
-    return () => unsubscribe()
-  }, [])
+    // Ordenar por tiempo (lexicográficamente)
+    resultados.sort((a, b) => a.tiempo.localeCompare(b.tiempo))
+
+    // Mostrar solo los últimos 12 puntos
+    setChartData(resultados.slice(-12))
+  })
+
+  return () => unsubscribe()
+}, [])
+
 
   return (
     <Card>
@@ -125,7 +157,7 @@ export function TemperaturaLineChart() {
               <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
               <Line
                 dataKey="temperatura"
-                type="natural"
+                type="monotone"
                 stroke="var(--color-temperatura)"
                 strokeWidth={2}
                 dot={false}
