@@ -1,7 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from "recharts"
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+} from "recharts"
 import { database } from "@/lib/firebase"
 import { ref, onValue } from "firebase/database"
 
@@ -20,13 +29,17 @@ import {
   ChartConfig,
 } from "@/components/ui/chart"
 
+// Config de etiqueta
 const chartConfig = {
-  temperatura: { label: "Temperatura (°C)", color: "hsl(var(--chart-1))" },
+  temperatura: {
+    label: "Temperatura (°C)",
+    color: "#5AA792", // Turquesa fijo
+  },
 } satisfies ChartConfig
 
+// Color de barra (solo gráfico)
 const getColor = (tipo: string) => {
-  if (tipo === "Temperatura") return chartConfig.temperatura.color
-  return undefined
+  return "#5AA792" // turquesa Terrawatch
 }
 
 export function ComponentLecturasActualesTemp() {
@@ -35,9 +48,7 @@ export function ComponentLecturasActualesTemp() {
   ])
 
   useEffect(() => {
-    const db = database
-    const ruta = ref(db, "lecturas_actuales")
-
+    const ruta = ref(database, "lecturas_actuales")
     onValue(ruta, (snapshot) => {
       const data = snapshot.val() || {}
       setDatos([
@@ -47,32 +58,53 @@ export function ComponentLecturasActualesTemp() {
   }, [])
 
   return (
-    <Card>
+    <Card className="bg-card text-card-foreground shadow-md border border-border transition-colors duration-300">
       <CardHeader>
-        <CardTitle>📊 Lecturas actuales</CardTitle>
-        <CardDescription>Datos en tiempo real</CardDescription>
+        <CardTitle className="text-lg font-semibold tracking-tight">
+          🌡️ Lecturas Actuales
+        </CardTitle>
+        <CardDescription className="text-muted-foreground">
+          Datos en tiempo real desde sensores
+        </CardDescription>
       </CardHeader>
+
       <CardContent>
         <ChartContainer config={chartConfig}>
-          <BarChart data={datos}>
-            <CartesianGrid vertical={false} />
-            <XAxis dataKey="tipo" tickLine={false} tickMargin={8} axisLine={false} />
-            <YAxis /> {/* ← Agregado para mostrar valores en el eje Y */}
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideIndicator />}
-            />
-            <Bar dataKey="valor">
-              <LabelList dataKey="valor" position="top" />
-              {datos.map((item, i) => (
-                <Cell key={i} fill={getColor(item.tipo)} />
-              ))}
-            </Bar>
-          </BarChart>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={datos}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis
+                dataKey="tipo"
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+              />
+              <ChartTooltip
+                cursor={{ fill: "hsl(var(--muted) / 0.2)" }}
+                content={<ChartTooltipContent hideIndicator />}
+              />
+              <Bar dataKey="valor" radius={[8, 8, 0, 0]}>
+                <LabelList
+                  dataKey="valor"
+                  position="top"
+                  style={{ fill: "hsl(var(--foreground))", fontWeight: 500 }}
+                />
+                {datos.map((item, index) => (
+                  <Cell key={index} fill={getColor(item.tipo)} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
+
       <CardFooter className="text-sm text-muted-foreground">
-        Temperatura Ambiental
+        Temperatura ambiental actual en °C
       </CardFooter>
     </Card>
   )

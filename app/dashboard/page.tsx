@@ -1,38 +1,45 @@
-import React from 'react'
+import React from 'react';
 import Menu from '@/components/Menu';
 import Header from '@/components/header';
 import { AlertSection } from '@/components/alertSection';
 import { ComponentPieChart } from '@/components/charts/dashboard/Pie Chart - Donut with Text D';
 import { HumedadChart } from '@/components/charts/dashboard/Radial Chart - Stacked D';
-//import {TemperaturaLineChart} from '@/components/charts/dashboard/Line Chart D';
 import { ComponentLecturasActualesTemp } from '@/components/charts/dashboard/Bar Chart - Negative';
 
 function Dashboard() {
   return (
-     <div className="flex flex-col min-h-screen ">
-      <div className="h-16">
-       <Header />
-      </div>
+    <div className="flex flex-col min-h-screen bg-background text-foreground transition-colors duration-300">
 
-        <div className="flex flex-1 overflow-hidden">
-        <div className="w-26 xl:w-52 border-r overflow-y-auto">
+      {/* Header superior */}
+      <header className="h-16 w-full shadow-sm bg-popover text-popover-foreground border-b border-border">
+        <Header />
+      </header>
+
+      {/* Contenedor principal: menú lateral, contenido central y alertas */}
+      <main className="flex flex-1 flex-col md:flex-row overflow-hidden bg-background">
+
+        {/* Menú lateral izquierdo */}
+        <aside className="hidden md:block w-20 xl:w-52 bg-sidebar text-sidebar-foreground border-r border-sidebar-border overflow-y-auto">
           <Menu />
-        </div>
+        </aside>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Contenido principal */}
+        <section className="flex-1 overflow-y-auto p-4 sm:p-6 bg-card text-card-foreground">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
             <ComponentPieChart />
             <HumedadChart />
-            <ComponentLecturasActualesTemp/>
+            <ComponentLecturasActualesTemp />
           </div>
-        </div>
+        </section>
 
-        <div className="w-40 xl:w-60  border-l overflow-y-auto p-6 ">
+        {/* Alertas (lado derecho) */}
+        <aside className="hidden lg:block w-40 xl:w-60 bg-sidebar text-sidebar-foreground border-l border-sidebar-border overflow-y-auto p-4 sm:p-6">
           <AlertSection />
-        </div>
-      </div>
+        </aside>
+
+      </main>
     </div>
-  )
+  );
 }
 
-export default Dashboard
+export default Dashboard;

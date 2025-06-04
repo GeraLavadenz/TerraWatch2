@@ -25,7 +25,7 @@ export function HumedadChart() {
 
   useEffect(() => {
     const db = getDatabase()
-    const humedadRef = ref(db, "lecturas_actuales/humedad_suelo_porcentaje") // ⚠️ ajusta esta ruta
+    const humedadRef = ref(db, "lecturas_actuales/humedad_suelo_porcentaje")
     const unsubscribe = onValue(humedadRef, (snapshot) => {
       const val = snapshot.val()
       if (typeof val === "number" && val >= 0 && val <= 100) {
@@ -35,8 +35,14 @@ export function HumedadChart() {
     return () => unsubscribe()
   }, [])
 
-  const color =
-    humedad >= 70 ? "#4ade80" : humedad >= 40 ? "#facc15" : "#ef4444" // verde, amarillo, rojo
+  // Escala Terrawatch: verde → turquesa → celeste
+  const getColor = (value: number) => {
+    if (value >= 70) return "#6DBB74" // verde 400
+    if (value >= 40) return "#5AA792" // turquesa 400
+    return "#60A1B0"                 // celeste 400
+  }
+
+  const color = getColor(humedad)
 
   const chartData = [
     {
@@ -46,18 +52,20 @@ export function HumedadChart() {
   ]
 
   const chartConfig = {
-   
     restante: {
-      color: "#e5e7eb",
+      color: "#BFDCE2", // celeste claro para la parte no llena
     },
   } satisfies ChartConfig
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col bg-card text-card-foreground border border-border shadow-sm transition-colors">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Humedad del Suelo</CardTitle>
-        <CardDescription>Actualizado en tiempo real</CardDescription>
+        <CardTitle>💧 Humedad del Suelo</CardTitle>
+        <CardDescription className="text-muted-foreground">
+          Actualizado en tiempo real
+        </CardDescription>
       </CardHeader>
+
       <CardContent className="flex flex-1 items-center pb-0">
         <ChartContainer
           config={chartConfig}
@@ -79,7 +87,12 @@ export function HumedadChart() {
                 content={({ viewBox }) => {
                   if (viewBox && "cx" in viewBox && "cy" in viewBox) {
                     return (
-                      <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
+                      <text
+                        x={viewBox.cx}
+                        y={viewBox.cy}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) - 16}
@@ -90,7 +103,7 @@ export function HumedadChart() {
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 4}
-                          className="fill-muted-foreground"
+                          className="fill-muted-foreground text-sm"
                         >
                           Humedad
                         </tspan>
@@ -100,6 +113,7 @@ export function HumedadChart() {
                 }}
               />
             </PolarRadiusAxis>
+
             <RadialBar
               dataKey="humedad"
               stackId="a"
@@ -110,18 +124,19 @@ export function HumedadChart() {
             <RadialBar
               dataKey="restante"
               stackId="a"
-              fill="#e5e7eb"
+              fill="#BFDCE2"
               className="stroke-transparent stroke-2"
               cornerRadius={5}
             />
           </RadialBarChart>
         </ChartContainer>
       </CardContent>
+
       <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Último valor registrado <TrendingUp className="h-4 w-4" />
+        <div className="flex items-center gap-2 font-semibold text-foreground">
+          Último valor registrado <TrendingUp className="h-4 w-4 text-[#5AA792]" />
         </div>
-        <div className="leading-none text-muted-foreground">
+        <div className="text-muted-foreground">
           Valor entre 0% (seco) y 100% (muy húmedo)
         </div>
       </CardFooter>
