@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getDatabase, ref, onValue } from "firebase/database"
-import { Bar, BarChart, CartesianGrid, Cell, LabelList } from "recharts"
+import { database } from "@/lib/firebase" // ✅ usa tu instancia compartida
+import { ref, onValue } from "firebase/database"
+import { Bar, BarChart, CartesianGrid, Cell, XAxis } from "recharts"
 
 import {
   Card, CardHeader, CardTitle, CardDescription,
@@ -33,7 +34,7 @@ export default function GraficoTempMes({ mes }: { mes: string }) {
   const [datos, setDatos] = useState<DiaTemperatura[]>([])
 
   useEffect(() => {
-    const db = getDatabase()
+    const db = database
     const ruta = ref(db, "lecturas")
 
     onValue(ruta, (snapshot) => {
@@ -64,14 +65,26 @@ export default function GraficoTempMes({ mes }: { mes: string }) {
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={datos}>
+          <BarChart data={datos}>
             <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="fecha"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              minTickGap={20}
+              tickFormatter={(value) =>
+                new Date(value).toLocaleDateString("es-BO", {
+                  day: "numeric",
+                  month: "short"
+                })
+              }
+            />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel hideIndicator />}
+              content={<ChartTooltipContent hideIndicator />}
             />
             <Bar dataKey="temperatura">
-              <LabelList position="top" dataKey="fecha" fillOpacity={1} />
               {datos.map((item, index) => (
                 <Cell
                   key={index}

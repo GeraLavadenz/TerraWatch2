@@ -62,7 +62,7 @@ export default function GraficoHumedadDia({ fecha }: { fecha: string }) {
             <CartesianGrid vertical={false} />
             <XAxis dataKey="hora" tickLine={false} tickMargin={10} axisLine={false} />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
-            <Bar dataKey="valor" fill="var(--color-valor)" radius={4} />
+            <Bar dataKey="valor" fill={chartConfig.valor.color} radius={4} />
           </BarChart>
         </ChartContainer>
       </CardContent>

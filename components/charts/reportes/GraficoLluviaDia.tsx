@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getDatabase, ref, onValue } from "firebase/database"
+import { database } from "@/lib/firebase"
+import { ref, onValue } from "firebase/database"
 import { RadialBarChart, RadialBar } from "recharts"
 
 import {
@@ -29,8 +30,8 @@ interface LecturaDia {
 export default function GraficoLluviaDia({ fecha }: { fecha: string }) {
   const [datos, setDatos] = useState<LecturaDia[]>([])
 
-  useEffect(() => {
-    const db = getDatabase()
+    useEffect(() => {
+    const db = database
     const ruta = ref(db, `lecturas/${fecha}`)
 
     onValue(ruta, (snapshot) => {
@@ -46,6 +47,7 @@ export default function GraficoLluviaDia({ fecha }: { fecha: string }) {
       setDatos(formateado)
     })
   }, [fecha])
+
 
   return (
     <Card className="flex flex-col">

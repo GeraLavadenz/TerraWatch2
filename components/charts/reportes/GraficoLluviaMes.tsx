@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getDatabase, ref, onValue } from "firebase/database"
+import { database } from "@/lib/firebase"
+import { ref, onValue } from "firebase/database"
 import { RadialBarChart, RadialBar } from "recharts"
 
 import {
@@ -34,7 +35,7 @@ export default function GraficoLluviaMes({ mes }: { mes: string }) {
   const [datos, setDatos] = useState<DiaLluvia[]>([])
 
   useEffect(() => {
-    const db = getDatabase()
+    const db = database
     const ruta = ref(db, "lecturas")
 
     onValue(ruta, (snapshot) => {

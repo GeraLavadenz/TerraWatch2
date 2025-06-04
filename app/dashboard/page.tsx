@@ -4,7 +4,8 @@ import Header from '@/components/header';
 import { AlertSection } from '@/components/alertSection';
 import { ComponentPieChart } from '@/components/charts/dashboard/Pie Chart - Donut with Text D';
 import { HumedadChart } from '@/components/charts/dashboard/Radial Chart - Stacked D';
-import {TemperaturaLineChart} from '@/components/charts/dashboard/Line Chart D';
+//import {TemperaturaLineChart} from '@/components/charts/dashboard/Line Chart D';
+import { ComponentLecturasActualesTemp } from '@/components/charts/dashboard/Bar Chart - Negative';
 
 function Dashboard() {
   return (
@@ -22,7 +23,7 @@ function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ComponentPieChart />
             <HumedadChart />
-            <TemperaturaLineChart/>
+            <ComponentLecturasActualesTemp/>
           </div>
         </div>
 

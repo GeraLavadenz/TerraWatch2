@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { Terminal } from "lucide-react"
-import { getDatabase, ref, onValue } from "firebase/database"
+import { database } from "@/lib/firebase" // ✅ tu instancia centralizada
+import { ref, onValue } from "firebase/database"
+
 
 import {
   Alert,
@@ -17,7 +19,7 @@ export function AlertSection() {
 
   useEffect(() => {
     try {
-      const db = getDatabase()
+      const db = database 
 
       onValue(ref(db, "alertas/lluvia"), (snap) => {
         if (snap.exists()) {

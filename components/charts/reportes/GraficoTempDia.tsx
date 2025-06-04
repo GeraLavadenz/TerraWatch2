@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getDatabase, ref, onValue } from "firebase/database"
+import { database } from "@/lib/firebase"
+import { ref, onValue } from "firebase/database"
 import { Bar, BarChart, CartesianGrid, Cell, LabelList } from "recharts"
 
 import {
@@ -25,7 +26,7 @@ export default function GraficoTempDia({ fecha }: { fecha: string }) {
   const [datos, setDatos] = useState<LecturaHora[]>([])
 
   useEffect(() => {
-    const db = getDatabase()
+    const db = database
     const ruta = ref(db, `lecturas/${fecha}`)
 
     onValue(ruta, (snapshot) => {

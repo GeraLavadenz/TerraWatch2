@@ -2,7 +2,9 @@
 
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-import { getDatabase, ref, onValue } from "firebase/database"
+import { database } from "@/lib/firebase"
+import { ref, onValue } from "firebase/database"
+
 
 import {
   Card,
@@ -70,7 +72,7 @@ export function GraficoSensoresTotales() {
   const [datos, setDatos] = React.useState<DatosDia[]>([])
 
   React.useEffect(() => {
-    const db = getDatabase()
+    const db = database
     const lecturasRef = ref(db, "lecturas")
 
     onValue(lecturasRef, (snapshot) => {
