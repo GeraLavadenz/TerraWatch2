@@ -33,55 +33,43 @@ export function ComponentChartsInteractive() {
   const [total, setTotal] = React.useState({ temperatura: 0, humedad: 0, lluvia: 0 })
 
   React.useEffect(() => {
-    const tempRef = ref(db, "historico/temperatura")
-    const humRef = ref(db, "historico/humedadSuelo")
-    const lluvRef = ref(db, "historico/lluvia")
+  const lecturasRef = ref(db, "lecturas")
 
-    const fetchData = () => {
-      let tempData: Record<string, number> = {}
-      let humData: Record<string, number> = {}
-      let lluvData: Record<string, number> = {}
+  const unsubscribe = onValue(lecturasRef, (snapshot) => {
+    const data = snapshot.val()
+    if (!data || typeof data !== "object") return
 
-      onValue(tempRef, (snapshot) => {
-        tempData = snapshot.val() || {}
-        onValue(humRef, (snapshot) => {
-          humData = snapshot.val() || {}
-          onValue(lluvRef, (snapshot) => {
-            lluvData = snapshot.val() || {}
+    const registros: SensorData[] = []
 
-            const fechas = Array.from(
-              new Set([
-                ...Object.keys(tempData),
-                ...Object.keys(humData),
-                ...Object.keys(lluvData),
-              ])
-            ).sort()
-
-            const mergedData = fechas.map((fecha) => ({
-              date: fecha,
-              temperatura: tempData[fecha] ?? 0,
-              humedad: humData[fecha] ?? 0,
-              lluvia: lluvData[fecha] ?? 0,
-            }))
-
-            const totals = mergedData.reduce(
-              (acc, curr) => ({
-                temperatura: acc.temperatura + curr.temperatura,
-                humedad: acc.humedad + curr.humedad,
-                lluvia: acc.lluvia + curr.lluvia,
-              }),
-              { temperatura: 0, humedad: 0, lluvia: 0 }
-            )
-
-            setChartData(mergedData)
-            setTotal(totals)
-          })
+    Object.entries(data).forEach(([fecha, horas]) => {
+      Object.entries(horas as any).forEach(([hora, valores]: [string, any]) => {
+        registros.push({
+          date: `${fecha} ${hora}`, // ← concatena fecha y hora
+          temperatura: Number(valores?.temperatura_C) || 0,
+          humedad: Number(valores?.humedad_suelo_porcentaje) || 0,
+          lluvia: Number(valores?.lluvia_porcentaje) || 0,
         })
       })
-    }
+    })
 
-    fetchData()
-  }, [])
+    registros.sort((a, b) => a.date.localeCompare(b.date))
+    setChartData(registros)
+
+    const totals = registros.reduce(
+      (acc, curr) => ({
+        temperatura: acc.temperatura + curr.temperatura,
+        humedad: acc.humedad + curr.humedad,
+        lluvia: acc.lluvia + curr.lluvia,
+      }),
+      { temperatura: 0, humedad: 0, lluvia: 0 }
+    )
+
+    setTotal(totals)
+  })
+
+  return () => unsubscribe()
+}, [])
+
 
   return (
     <Card>

@@ -8,12 +8,12 @@ import Menu from "@/components/Menu"
 import { AlertSection } from "@/components/alertSection"
 
 // Gráficos por día
-import GraficoTempDia from "@/components/charts/reportes/GraficoLluviaDia"
+import GraficoTempDia from "@/components/charts/reportes/GraficoTempDia"
 import GraficoHumedadDia from "@/components/charts/reportes/GraficoHumedadDia"
 import GraficoLluviaDia from "@/components/charts/reportes/GraficoLluviaDia"
 
 // Gráficos por mes
-import GraficoTempMes from "@/components/charts/reportes/GraficoLluviaMes"
+import GraficoTempMes from "@/components/charts/reportes/GraficoTempMes"
 import GraficoHumedadMes from "@/components/charts/reportes/GraficoHumedadMes"
 import GraficoLluviaMes from "@/components/charts/reportes/GraficoLluviaMes"
 

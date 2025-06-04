@@ -25,8 +25,9 @@ interface Lectura {
 }
 
 type Valores = {
-  humedad_suelo?: number
+  humedad_suelo_porcentaje?: number
 }
+
 
 export default function GraficoHumedadDia({ fecha }: { fecha: string }) {
   const [datos, setDatos] = useState<Lectura[]>([])
@@ -38,12 +39,13 @@ export default function GraficoHumedadDia({ fecha }: { fecha: string }) {
     onValue(ruta, (snapshot) => {
       const data = snapshot.val() || {}
       const formateado = Object.entries(data).map(([hora, valores]) => {
-        const v = valores as Valores
-        return {
-          hora,
-          valor: v.humedad_suelo ?? 0,
-        }
-      })
+      const v = valores as Valores
+      return {
+        hora,
+        valor: v.humedad_suelo_porcentaje ?? 0,
+      }
+})
+
       setDatos(formateado)
     })
   }, [fecha])
