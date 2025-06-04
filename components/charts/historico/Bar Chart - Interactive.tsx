@@ -26,6 +26,11 @@ type SensorData = {
   lluvia: number;
 };
 
+type ValorLectura = {
+  temperatura_C?: number;
+  humedad_suelo_porcentaje?: number;
+  lluvia_porcentaje?: number;
+};
 
 export function ComponentChartsInteractive() {
   const [chartData, setChartData] = React.useState<SensorData[]>([])
@@ -33,43 +38,42 @@ export function ComponentChartsInteractive() {
   const [total, setTotal] = React.useState({ temperatura: 0, humedad: 0, lluvia: 0 })
 
   React.useEffect(() => {
-  const lecturasRef = ref(db, "lecturas")
+    const lecturasRef = ref(db, "lecturas")
 
-  const unsubscribe = onValue(lecturasRef, (snapshot) => {
-    const data = snapshot.val()
-    if (!data || typeof data !== "object") return
+    const unsubscribe = onValue(lecturasRef, (snapshot) => {
+      const data = snapshot.val()
+      if (!data || typeof data !== "object") return
 
-    const registros: SensorData[] = []
+      const registros: SensorData[] = []
 
-    Object.entries(data).forEach(([fecha, horas]) => {
-      Object.entries(horas as any).forEach(([hora, valores]: [string, any]) => {
-        registros.push({
-          date: `${fecha} ${hora}`, // ← concatena fecha y hora
-          temperatura: Number(valores?.temperatura_C) || 0,
-          humedad: Number(valores?.humedad_suelo_porcentaje) || 0,
-          lluvia: Number(valores?.lluvia_porcentaje) || 0,
+      Object.entries(data).forEach(([fecha, horas]) => {
+        Object.entries(horas as Record<string, ValorLectura>).forEach(([hora, valores]) => {
+          registros.push({
+            date: `${fecha} ${hora}`,
+            temperatura: Number(valores?.temperatura_C) || 0,
+            humedad: Number(valores?.humedad_suelo_porcentaje) || 0,
+            lluvia: Number(valores?.lluvia_porcentaje) || 0,
+          })
         })
       })
+
+      registros.sort((a, b) => a.date.localeCompare(b.date))
+      setChartData(registros)
+
+      const totals = registros.reduce(
+        (acc, curr) => ({
+          temperatura: acc.temperatura + curr.temperatura,
+          humedad: acc.humedad + curr.humedad,
+          lluvia: acc.lluvia + curr.lluvia,
+        }),
+        { temperatura: 0, humedad: 0, lluvia: 0 }
+      )
+
+      setTotal(totals)
     })
 
-    registros.sort((a, b) => a.date.localeCompare(b.date))
-    setChartData(registros)
-
-    const totals = registros.reduce(
-      (acc, curr) => ({
-        temperatura: acc.temperatura + curr.temperatura,
-        humedad: acc.humedad + curr.humedad,
-        lluvia: acc.lluvia + curr.lluvia,
-      }),
-      { temperatura: 0, humedad: 0, lluvia: 0 }
-    )
-
-    setTotal(totals)
-  })
-
-  return () => unsubscribe()
-}, [])
-
+    return () => unsubscribe()
+  }, [])
 
   return (
     <Card>
@@ -79,7 +83,6 @@ export function ComponentChartsInteractive() {
           <CardDescription>Histórico de sensores y total acumulado</CardDescription>
         </div>
 
-        {/* Totales de cada sensor */}
         <div className="flex">
           {Object.keys(chartConfig).map((key) => {
             const chart = key as keyof typeof chartConfig
