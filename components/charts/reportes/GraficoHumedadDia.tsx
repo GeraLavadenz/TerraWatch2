@@ -9,8 +9,9 @@ import {
   CardContent, CardFooter
 } from "@/components/ui/card"
 import {
-  ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig
+  ChartContainer, ChartConfig
 } from "@/components/ui/chart"
+
 
 const chartConfig = {
   valor: {
