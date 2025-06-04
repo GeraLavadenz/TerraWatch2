@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell, Tooltip } from "recharts"
 import { getDatabase, ref, onValue } from "firebase/database"
 
 import {
@@ -15,7 +15,7 @@ import {
 const chartConfig = {
   valor: {
     label: "Humedad (%)",
-    color: "hsl(var(--chart-1))", // por si se requiere como fallback
+    color: "hsl(var(--chart-1))",
   }
 } satisfies ChartConfig
 
@@ -66,7 +66,20 @@ export default function GraficoHumedadDia({ fecha }: { fecha: string }) {
             <CartesianGrid vertical={false} />
             <XAxis dataKey="hora" tickLine={false} tickMargin={10} axisLine={false} />
             <YAxis label={{ value: "%", angle: -90, position: "insideLeft", dy: 60 }} />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" nameKey="hora" />} />
+            <Tooltip
+              cursor={false}
+              content={({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <div className="bg-black text-white p-2 rounded text-sm">
+                      <p>{label}</p>
+                      <p>Humedad: {payload[0].value} %</p>
+                    </div>
+                  )
+                }
+                return null
+              }}
+            />
             <Bar dataKey="valor" radius={4}>
               {datos.map((item, index) => (
                 <Cell key={index} fill={getColorPorHumedad(item.valor)} />
