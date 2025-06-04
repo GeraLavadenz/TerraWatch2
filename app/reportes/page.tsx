@@ -21,14 +21,21 @@ import { GraficoSensoresTotales } from "@/components/charts/reportes/GraficoSens
 export default function Reportes() {
   const [tipo, setTipo] = useState<"día" | "mes">("día")
   const [fecha, setFecha] = useState("")
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="h-16"><Header /></div>
+      <div className="h-16">
+        <Header />
+      </div>
 
       <div className="flex flex-1 h-[calc(100vh-4rem)] overflow-hidden">
-        <div className="w-26 xl:w-52 border-r overflow-y-auto"><Menu /></div>
+        {/* Menú lateral */}
+        <div className="w-0 xl:w-52">
+          <Menu isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
+        </div>
 
+        {/* Contenido principal */}
         <div className="flex-1 flex flex-col overflow-hidden p-6 space-y-6">
           <h1 className="text-3xl font-bold text-neutral-800 dark:text-neutral-100 mb-2 relative inline-block">
             📊 Reportes
@@ -63,6 +70,7 @@ export default function Reportes() {
           )}
         </div>
 
+        {/* Sección lateral derecha */}
         <div className="w-40 xl:w-60 border-l overflow-y-auto p-4 hidden xl:block">
           <AlertSection />
         </div>

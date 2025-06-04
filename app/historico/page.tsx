@@ -1,11 +1,14 @@
-import React from 'react'
-import Menu from '@/components/Menu';
-import Header from '@/components/header';
-import { AlertSection } from '@/components/alertSection';
-import {ComponentChartsInteractive} from '@/components/charts/historico/Bar Chart - Interactive';
+"use client"
 
+import React, { useState } from 'react'
+import Menu from '@/components/Menu'
+import Header from '@/components/header'
+import { AlertSection } from '@/components/alertSection'
+import { ComponentChartsInteractive } from '@/components/charts/historico/Bar Chart - Interactive'
 
 function Historico() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="h-16">
@@ -13,11 +16,17 @@ function Historico() {
       </div>
 
       {/* Contenido principal */}
-      <div className="flex flex-1 h-[calc(100vh-4rem)] overflow-hidden">
-        
-        {/* Menú lateral */}
-        <div className="w-26 xl:w-52 border-r overflow-y-auto">
-          <Menu />
+      <div className="flex flex-1 h-[calc(100vh-4rem)] overflow-hidden top-10">
+        {/* Menú lateral (condicional) */}
+        <div
+          className={`
+            ${isMenuOpen ? "w-26" : "w-0"} 
+            xl:w-52 
+            transition-all duration-300 
+            overflow-hidden border-r 
+          `}
+        >
+          <Menu isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
         </div>
 
         {/* Contenido central */}
@@ -34,12 +43,14 @@ function Historico() {
             <ComponentChartsInteractive />
           </div>
         </div>
+
+        {/* Sección lateral derecha */}
         <div className="w-40 xl:w-60 border-l overflow-y-auto p-4 hidden xl:block">
           <AlertSection />
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 export default Historico
