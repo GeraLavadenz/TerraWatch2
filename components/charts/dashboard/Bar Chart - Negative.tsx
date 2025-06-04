@@ -38,9 +38,10 @@ const chartConfig = {
 } satisfies ChartConfig
 
 // Color de barra (solo gráfico)
-const getColor = (tipo: string) => {
-  return "#5AA792" // turquesa Terrawatch
+const getColor = () => {
+  return "#5AA792"
 }
+
 
 export function ComponentLecturasActualesTemp() {
   const [datos, setDatos] = useState([
@@ -95,7 +96,7 @@ export function ComponentLecturasActualesTemp() {
                   style={{ fill: "hsl(var(--foreground))", fontWeight: 500 }}
                 />
                 {datos.map((item, index) => (
-                  <Cell key={index} fill={getColor(item.tipo)} />
+                  <Cell key={index} fill={getColor()} />
                 ))}
               </Bar>
             </BarChart>
