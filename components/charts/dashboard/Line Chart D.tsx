@@ -59,7 +59,7 @@ const chartConfig = {
 export function TemperaturaLineChart() {
   const [chartData, setChartData] = useState<ChartDataItem[]>([])
 
-<<<<<<< Updated upstream
+
   useEffect(() => {
     const db = getDatabase()
     const lecturasRef: DatabaseReference = ref(db, "lecturas")
@@ -89,7 +89,7 @@ export function TemperaturaLineChart() {
         resultados.sort((a, b) => (a.tiempo > b.tiempo ? 1 : -1))
 
         setChartData(resultados.slice(-50))
-=======
+
  useEffect(() => {
   const db = getDatabase()
   const refLecturas = ref(db, "lecturas")
@@ -111,7 +111,7 @@ export function TemperaturaLineChart() {
             })
           }
         })
->>>>>>> Stashed changes
+
       }
     })
 
