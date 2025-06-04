@@ -16,6 +16,7 @@ import GraficoLluviaDia from "@/components/charts/reportes/GraficoLluviaDia"
 import GraficoTempMes from "@/components/charts/reportes/GraficoTempMes"
 import GraficoHumedadMes from "@/components/charts/reportes/GraficoHumedadMes"
 import GraficoLluviaMes from "@/components/charts/reportes/GraficoLluviaMes"
+import { GraficoSensoresTotales } from "@/components/charts/reportes/GraficoSensoresTotales"
 
 export default function Reportes() {
   const [tipo, setTipo] = useState<"día" | "mes">("día")
@@ -41,7 +42,7 @@ export default function Reportes() {
           </div>
 
           {/* Gráficos */}
-          {fecha && (
+          {fecha ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {tipo === "día" ? (
                 <>
@@ -57,6 +58,8 @@ export default function Reportes() {
                 </>
               )}
             </div>
+          ) : (
+            <GraficoSensoresTotales />
           )}
         </div>
 

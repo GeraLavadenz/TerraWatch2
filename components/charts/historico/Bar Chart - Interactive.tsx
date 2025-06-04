@@ -14,9 +14,9 @@ import {
 } from "@/components/ui/chart"
 
 const chartConfig = {
-  temperatura: { label: "Temperatura (°C)", color: "#64551f" },
-  humedad: { label: "Humedad (%)", color: "#167f1b" },
-  lluvia: { label: "Lluvia (%)", color: "#0f7176" },
+  temperatura: { label: "Temperatura (°C)", color: "#60A1B0" }, // Celeste
+  humedad: { label: "Humedad (%)", color: "#5AA792" },          // Turquesa
+  lluvia: { label: "Lluvia (%)", color: "#6DBB74" },            // Verde
 } satisfies ChartConfig
 
 type SensorData = {
@@ -24,13 +24,13 @@ type SensorData = {
   temperatura: number;
   humedad: number;
   lluvia: number;
-};
+}
 
 type ValorLectura = {
   temperatura_C?: number;
   humedad_suelo_porcentaje?: number;
   lluvia_porcentaje?: number;
-};
+}
 
 export function ComponentChartsInteractive() {
   const [chartData, setChartData] = React.useState<SensorData[]>([])
@@ -76,14 +76,14 @@ export function ComponentChartsInteractive() {
   }, [])
 
   return (
-    <Card>
-      <CardHeader className="flex flex-col items-stretch border-b p-0 sm:flex-row">
-        <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
-          <CardTitle>Datos Ambientales</CardTitle>
+    <Card className="bg-card text-card-foreground border border-border shadow-sm">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center border-b p-0">
+        <div className="flex-1 px-6 py-5">
+          <CardTitle>📊 Datos Ambientales</CardTitle>
           <CardDescription>Histórico de sensores y total acumulado</CardDescription>
         </div>
 
-        <div className="flex">
+        <div className="flex divide-x divide-border border-t sm:border-t-0 sm:border-l">
           {Object.keys(chartConfig).map((key) => {
             const chart = key as keyof typeof chartConfig
             const isActive = activeChart === chart
@@ -91,30 +91,28 @@ export function ComponentChartsInteractive() {
               <button
                 key={chart}
                 onClick={() => setActiveChart(chart)}
-                className={`relative z-30 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l sm:border-l sm:border-t-0 sm:px-8 sm:py-6 ${
-                  isActive ? "bg-muted/50" : ""
+                className={`flex-1 px-4 py-3 sm:px-6 sm:py-4 text-left transition-colors ${
+                  isActive ? "bg-muted/40" : ""
                 }`}
               >
                 <span className={`text-xs ${isActive ? "text-primary" : "text-muted-foreground"}`}>
                   {chartConfig[chart].label}
                 </span>
-                <span className={`${
-                  isActive
-                    ? "text-3xl font-bold text-primary"
-                    : "text-base font-semibold text-muted-foreground"
+                <div className={`${
+                  isActive ? "text-2xl font-bold text-primary" : "text-base font-semibold text-muted-foreground"
                 }`}>
                   {total[chart].toLocaleString()}
-                </span>
+                </div>
               </button>
             )
           })}
         </div>
       </CardHeader>
 
-      <CardContent className="px-2 sm:p-6">
+      <CardContent className="px-2 sm:px-6">
         <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
           <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
-            <CartesianGrid vertical={false} />
+            <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
               tickLine={false}
@@ -150,6 +148,7 @@ export function ComponentChartsInteractive() {
               dataKey={activeChart}
               name={chartConfig[activeChart].label}
               fill={chartConfig[activeChart].color}
+              radius={[4, 4, 0, 0]}
             />
           </BarChart>
         </ChartContainer>

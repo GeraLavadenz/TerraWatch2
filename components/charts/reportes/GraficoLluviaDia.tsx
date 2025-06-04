@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react"
 import { database } from "@/lib/firebase"
 import { ref, onValue } from "firebase/database"
-import { RadialBarChart, RadialBar } from "recharts"
+import {
+  Bar, BarChart, CartesianGrid, Cell,
+  XAxis, YAxis
+} from "recharts"
 
 import {
   Card, CardHeader, CardTitle, CardDescription,
@@ -14,61 +17,74 @@ import {
 } from "@/components/ui/chart"
 
 const chartConfig = {
-  lluvia: { label: "Lluvia", color: "hsl(var(--chart-1))" }
+  lluvia: { label: "Lluvia (%)" },
 } satisfies ChartConfig
 
-interface Valores {
-  lluvia?: number
-}
-
-interface LecturaDia {
+interface LecturaHora {
   hora: string
   lluvia: number
-  fill: string
 }
 
 export default function GraficoLluviaDia({ fecha }: { fecha: string }) {
-  const [datos, setDatos] = useState<LecturaDia[]>([])
+  const [datos, setDatos] = useState<LecturaHora[]>([])
 
-    useEffect(() => {
-    const db = database
-    const ruta = ref(db, `lecturas/${fecha}`)
+  useEffect(() => {
+    if (!fecha || fecha.trim() === "") return
+    const ruta = ref(database, `lecturas/${fecha}`)
 
     onValue(ruta, (snapshot) => {
       const data = snapshot.val() || {}
       const formateado = Object.entries(data).map(([hora, valores]) => {
-        const v = valores as Valores
+        const v = valores as { lluvia_porcentaje?: number }
         return {
           hora,
-          lluvia: v.lluvia ?? 0,
-          fill: "var(--color-lluvia)"
+          lluvia: v.lluvia_porcentaje ?? 0,
         }
       })
       setDatos(formateado)
     })
   }, [fecha])
 
+  const getColorPorLluvia = (lluvia: number) => {
+    if (lluvia <= 30) return "#A0D9C2" // baja
+    if (lluvia <= 70) return "#5AA792" // media
+    return "#2F7F6D"                  // alta
+  }
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="items-center pb-0">
+    <Card>
+      <CardHeader>
         <CardTitle>🌧️ Lluvia por hora</CardTitle>
         <CardDescription>{fecha}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
-        <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px]">
-          <RadialBarChart data={datos} innerRadius={30} outerRadius={110}>
+      <CardContent>
+        <ChartContainer config={chartConfig}>
+          <BarChart data={datos}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="hora" tick={{ fontSize: 10 }} />
+            <YAxis
+              label={{ value: "%", angle: -90, position: "insideLeft", dy: 60 }}
+              tick={{ fontSize: 12 }}
+            />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel nameKey="hora" />}
+              content={<ChartTooltipContent hideIndicator nameKey="hora" />}
             />
-            <RadialBar dataKey="lluvia" background />
-          </RadialBarChart>
+            <Bar dataKey="lluvia">
+              {datos.map((item, index) => (
+                <Cell
+                  key={index}
+                  fill={getColorPorLluvia(item.lluvia)}
+                />
+              ))}
+            </Bar>
+          </BarChart>
         </ChartContainer>
       </CardContent>
       <CardFooter className="text-sm text-muted-foreground">
-        Lluvia registrada por hora durante el día seleccionado.
+        Lluvia registrada hora por hora.
       </CardFooter>
     </Card>
   )
 }
+

@@ -1,24 +1,23 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { database } from "@/lib/firebase"
 import { ref, onValue } from "firebase/database"
-
+import { RadialBarChart, RadialBar, Cell } from "recharts"
 
 import {
   Card, CardHeader, CardTitle, CardDescription,
   CardContent, CardFooter
 } from "@/components/ui/card"
 import {
-  ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig
+  ChartContainer, ChartTooltip, ChartConfig
 } from "@/components/ui/chart"
 
 const chartConfig = {
-  valor: {
-    label: "Humedad",
-    color: "hsl(var(--chart-1))",
-  }
+  humedad: {
+    label: "Humedad promedio (%)",
+    color: "#5DADE2",
+  },
 } satisfies ChartConfig
 
 interface Lectura {
@@ -29,55 +28,102 @@ interface Horas {
   [hora: string]: Lectura
 }
 
-interface DiaResumen {
+interface DiaHumedad {
   fecha: string
-  valor: number
+  humedad: number
+  color: string
+}
+
+const getColorPorHumedad = (valor: number) => {
+  if (valor <= 30) return "#85C1E9" // Baja
+  if (valor <= 70) return "#5DADE2" // Media
+  return "#2874A6"                 // Alta
+}
+
+const getIconoHumedad = (valor: number) => {
+  if (valor <= 30) return "💧"
+  if (valor <= 70) return "🌫️"
+  return "💦"
 }
 
 export default function GraficoHumedadMes({ mes }: { mes: string }) {
-  const [datos, setDatos] = useState<DiaResumen[]>([])
+  const [datos, setDatos] = useState<DiaHumedad[]>([])
 
   useEffect(() => {
-    const db = database
-    const ruta = ref(db, "lecturas")
+    if (!mes) return
+
+    const ruta = ref(database, "lecturas")
 
     onValue(ruta, (snapshot) => {
       const data = snapshot.val() || {}
-      const diasDelMes = Object.entries(data).filter(([fecha]) => fecha.startsWith(mes))
 
-      const resumen = diasDelMes.map(([fecha, horas]) => {
+      const diasDelMes = Object.entries(data).filter(([fecha]) =>
+        fecha.startsWith(mes)
+      )
+
+      const formateado = diasDelMes.map(([fecha, horas]) => {
         const h = horas as Horas
-        const lecturas = Object.values(h).map(lectura => lectura.humedad_suelo_porcentaje ?? 0)
-
-        const promedio = lecturas.length > 0
-          ? lecturas.reduce((a, b) => a + b, 0) / lecturas.length
+        const valores = Object.values(h).map(
+          lectura => lectura.humedad_suelo_porcentaje ?? 0
+        )
+        const promedio = valores.length > 0
+          ? valores.reduce((a, b) => a + b, 0) / valores.length
           : 0
-        return { fecha, valor: parseFloat(promedio.toFixed(1)) }
+
+        return {
+          fecha,
+          humedad: parseFloat(promedio.toFixed(2)),
+          color: getColorPorHumedad(promedio),
+        }
       })
 
-      setDatos(resumen)
+      setDatos(formateado)
     })
   }, [mes])
 
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>💧 Promedio de humedad por día</CardTitle>
+    <Card className="flex flex-col">
+      <CardHeader className="items-center pb-0">
+        <CardTitle>💧 Humedad promedio por día</CardTitle>
         <CardDescription>{mes}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={datos}>
-            <CartesianGrid vertical={false} />
-            <XAxis dataKey="fecha" tickLine={false} tickMargin={10} axisLine={false} />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
-            <Bar dataKey="valor" fill="var(--color-valor)" radius={4} />
-          </BarChart>
+
+      <CardContent className="flex-1 pb-0">
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto aspect-square max-h-[300px]"
+        >
+          <RadialBarChart data={datos} innerRadius={30} outerRadius={110}>
+            <ChartTooltip
+              cursor={false}
+              content={({ active, payload }) => {
+                if (!active || !payload || !payload.length) return null
+                const valor = payload[0].value as number
+                const fecha = payload[0].payload.fecha
+                return (
+                  <div className="rounded-md border bg-background px-3 py-1 text-sm shadow-sm">
+                    <strong>{fecha}</strong>
+                    <div className="pt-1">{getIconoHumedad(valor)} {valor} %</div>
+                  </div>
+                )
+              }}
+            />
+            <RadialBar dataKey="humedad" background>
+              {datos.map((d, i) => (
+                <Cell key={`cell-${i}`} fill={d.color} />
+              ))}
+            </RadialBar>
+          </RadialBarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        Promedio de humedad diario en el mes seleccionado.
+
+      <CardFooter className="text-sm text-muted-foreground flex flex-col gap-1">
+        <div>Humedad del suelo promedio diaria durante el mes seleccionado.</div>
+        <div className="flex items-center justify-center gap-4 mt-2 text-xs">
+          <span>💧 Baja (&lt;=30%)</span>
+          <span>🌫️ Media (31–70%)</span>
+          <span>💦 Alta (&gt;70%)</span>
+        </div>
       </CardFooter>
     </Card>
   )
