@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-//import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from "recharts"
 import { database } from "@/lib/firebase"
 import { ref, onValue } from "firebase/database"
 
@@ -23,15 +22,16 @@ import {
 
 const chartConfig = {
   temperatura: { label: "Temperatura (°C)", color: "hsl(var(--chart-1))" },
-  humedad: { label: "Humedad (%)", color: "hsl(var(--chart-2))" },
-  lluvia: { label: "Lluvia (%)", color: "hsl(var(--chart-3))" },
 } satisfies ChartConfig
+
+const getColor = (tipo: string) => {
+  if (tipo === "Temperatura") return chartConfig.temperatura.color
+  return undefined
+}
 
 export function ComponentLecturasActualesTemp() {
   const [datos, setDatos] = useState([
     { tipo: "Temperatura", valor: 0 },
-    { tipo: "Humedad", valor: 0 },
-    { tipo: "Lluvia", valor: 0 },
   ])
 
   useEffect(() => {
@@ -42,17 +42,9 @@ export function ComponentLecturasActualesTemp() {
       const data = snapshot.val() || {}
       setDatos([
         { tipo: "Temperatura", valor: data.temperatura_C ?? 0 },
-        { tipo: "Humedad", valor: data.humedad_suelo_porcentaje ?? 0 },
-        { tipo: "Lluvia", valor: data.lluvia_porcentaje ?? 0 },
       ])
     })
   }, [])
-
-  const getColor = (tipo: string) => {
-    if (tipo === "Temperatura") return chartConfig.temperatura.color
-    if (tipo === "Humedad") return chartConfig.humedad.color
-    return chartConfig.lluvia.color
-  }
 
   return (
     <Card>
@@ -65,6 +57,7 @@ export function ComponentLecturasActualesTemp() {
           <BarChart data={datos}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="tipo" tickLine={false} tickMargin={8} axisLine={false} />
+            <YAxis /> {/* ← Agregado para mostrar valores en el eje Y */}
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent hideIndicator />}
@@ -79,7 +72,7 @@ export function ComponentLecturasActualesTemp() {
         </ChartContainer>
       </CardContent>
       <CardFooter className="text-sm text-muted-foreground">
-        Actualizado en vivo desde <code>lecturas_actuales</code>.
+        Temperatura Ambiental
       </CardFooter>
     </Card>
   )
