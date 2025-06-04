@@ -37,10 +37,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-// Color de barra (solo gráfico)
-const getColor = (tipo: string) => {
-  return "#5AA792" // turquesa Terrawatch
-}
+
 
 export function ComponentLecturasActualesTemp() {
   const [datos, setDatos] = useState([
