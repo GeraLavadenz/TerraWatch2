@@ -41,5 +41,4 @@ yarn-error.log*
 next-env.d.ts
 
 # Firebase Admin SDK
-src/lib/firebase/credentials.json
-src/lib/firebase/credentials.json
+/lib/firebase/credentials.json
