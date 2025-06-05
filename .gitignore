@@ -42,3 +42,4 @@ next-env.d.ts
 
 # Firebase Admin SDK
 src/lib/firebase/credentials.json
+src/lib/firebase/credentials.json
