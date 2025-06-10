@@ -15,18 +15,37 @@ export function AlertSection() {
   const [lluviaProlongada, setLluviaProlongada] = useState("Cargando...")
   const [humedad, setHumedad] = useState("Cargando...")
 
-  useEffect(() => {
-    const db = database
-    onValue(ref(db, "alertas/lluvia"), (snap) =>
-      setLluvia(snap.exists() ? snap.val() : "Sin datos")
-    )
-    onValue(ref(db, "alertas/lluvia_prolongada"), (snap) =>
-      setLluviaProlongada(snap.exists() ? snap.val() : "Sin datos")
-    )
-    onValue(ref(db, "alertas/humedad"), (snap) =>
-      setHumedad(snap.exists() ? snap.val() : "Sin datos")
-    )
-  }, [])
+ useEffect(() => {
+  const db = database;
+
+  // Lluvia normal
+  onValue(ref(db, "alertas/lluvia"), (snap) =>
+    setLluvia(snap.exists() ? snap.val() : "Sin datos")
+  );
+
+  // Lluvia prolongada - con detección de cambio
+  let valorAnterior: string | null = null;
+  onValue(ref(db, "alertas/lluvia_prolongada"), (snap) => {
+    if (snap.exists()) {
+      const nuevoValor = snap.val();
+      if (nuevoValor !== valorAnterior) {
+        setLluviaProlongada(nuevoValor);
+        valorAnterior = nuevoValor;
+        console.log("🔁 Lluvia prolongada actualizada:", nuevoValor);
+      } else {
+        console.log("🔇 Sin cambio en lluvia prolongada");
+      }
+    } else {
+      setLluviaProlongada("Sin datos");
+    }
+  });
+
+  // Humedad
+  onValue(ref(db, "alertas/humedad"), (snap) =>
+    setHumedad(snap.exists() ? snap.val() : "Sin datos")
+  );
+}, []);
+
 
   return (
     <div className="w-full">

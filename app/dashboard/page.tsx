@@ -8,6 +8,8 @@ import { ComponentPieChart } from "@/components/charts/dashboard/Pie Chart - Don
 import { HumedadChart } from "@/components/charts/dashboard/Radial Chart - Stacked D";
 import { ComponentLecturasActualesTemp } from "@/components/charts/dashboard/Bar Chart - Negative";
 
+
+
 function Dashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 

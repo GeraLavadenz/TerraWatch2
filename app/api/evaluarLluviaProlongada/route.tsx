@@ -1,9 +1,12 @@
 // /src/app/api/evaluarLluviaProlongada/route.ts
+// /src/app/api/evaluarLluviaProlongada/route.ts
 import { NextResponse } from 'next/server';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getDatabase } from 'firebase-admin/database';
-import serviceAccount from '@/lib/firebase/credentials.json';
+import { getMessaging } from 'firebase-admin/messaging';
+import serviceAccount from '@/credentials.json';
 
+// Inicializar Firebase Admin
 if (!getApps().length) {
   initializeApp({
     credential: cert(serviceAccount as any),
@@ -15,9 +18,9 @@ const db = getDatabase();
 
 export async function GET() {
   try {
-    const hoy = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+    const hoy = new Date().toISOString().split('T')[0];
     const lecturasRef = db.ref(`/lecturas/${hoy}`);
-    const snapshot = await lecturasRef.limitToLast(30).get(); // últimas 30 lecturas
+    const snapshot = await lecturasRef.limitToLast(30).get();
 
     const datos = snapshot.val();
     if (!datos) return NextResponse.json({ message: 'Sin datos' }, { status: 404 });
@@ -35,15 +38,37 @@ export async function GET() {
     }
 
     const prolongada = ciclosSeguidos >= 12 ? 'Sí' : 'No';
+
+    // Guardar resultado
     await db.ref('/alertas/lluvia_prolongada').set(prolongada);
 
+    // ⚠️ Si hay lluvia prolongada, enviar notificación
+    if (prolongada === 'Sí') {
+      const tokensRef = db.ref('/tokens');
+      const tokensSnap = await tokensRef.get();
+      const tokensObj = tokensSnap.val();
+
+      if (tokensObj) {
+        for (const userId in tokensObj) {
+          const token = tokensObj[userId];
+          await getMessaging().send({
+            token,
+            notification: {
+              title: '🌧️ Lluvia Prolongada Detectada',
+              body: 'Se ha detectado lluvia continua en TerraWatch. Revisa el sistema.',
+            },
+          });
+          console.log(`📤 Notificación enviada a ${userId}`);
+        }
+      }
+    }
+
     return NextResponse.json({
-      estado: 'OK',
       lluvia_prolongada: prolongada,
       ciclosDetectados: ciclosSeguidos,
     });
   } catch (error) {
-    console.error('Error evaluando lluvia prolongada:', error);
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+    console.error('❌ Error evaluando lluvia prolongada:', error);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
