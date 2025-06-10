@@ -1,34 +1,29 @@
 'use client';
 
 import { useEffect } from 'react';
+import { solicitarPermisoYObtenerToken, escucharMensajes } from '@/lib/firebase-notifications';
+import { ref, set } from 'firebase/database';
 import { database } from '@/lib/firebase';
-import { ref, get, set } from 'firebase/database';
-import {
-  solicitarPermisoYObtenerToken,
-  onMessage,
-} from '@/lib/firebase-notifications';
 
 export default function NotificacionesFCM() {
   useEffect(() => {
     async function registrarToken() {
       const token = await solicitarPermisoYObtenerToken();
       if (token) {
-        const userId =
-          typeof window !== 'undefined'
-            ? localStorage.getItem('usuarioId') || token
-            : token;
+        console.log('✅ Token FCM obtenido:', token);
 
-        const tokenRef = ref(database, `tokens/${userId}`);
-        const snapshot = await get(tokenRef);
-        if (!snapshot.exists() || snapshot.val() !== token) {
-          await set(tokenRef, token);
-        }
+        const userId = typeof window !== 'undefined'
+          ? localStorage.getItem('usuarioId') || 'anonimo'
+          : 'anonimo';
+
+        await set(ref(database, `tokens/${userId}`), token);
+        console.log(`📥 Token guardado en tokens/${userId}`);
       }
     }
 
     registrarToken();
 
-    onMessage((payload) => {
+    escucharMensajes((payload) => {
       alert(`🔔 ${payload.notification?.title}\n${payload.notification?.body}`);
     });
   }, []);
