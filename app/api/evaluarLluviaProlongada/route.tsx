@@ -1,74 +1,88 @@
-// /src/app/api/evaluarLluviaProlongada/route.ts
-// /src/app/api/evaluarLluviaProlongada/route.ts
-import { NextResponse } from 'next/server';
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getDatabase } from 'firebase-admin/database';
-import { getMessaging } from 'firebase-admin/messaging';
+import { NextResponse } from "next/server";
+import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { getDatabase } from "firebase-admin/database";
 
+// Credenciales desde variables de entorno (.env.local o configuraciones de Vercel)
+const serviceAccount = {
+  type: "service_account",
+  project_id: process.env.FB_PROJECT_ID,
+  private_key_id: process.env.FB_PRIVATE_KEY_ID,
+  private_key: process.env.FB_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+  client_email: process.env.FB_CLIENT_EMAIL,
+  client_id: process.env.FB_CLIENT_ID,
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: process.env.FB_CLIENT_CERT_URL,
+  universe_domain: "googleapis.com",
+};
 
-// Inicializar Firebase Admin
 if (!getApps().length) {
   initializeApp({
     credential: cert(serviceAccount as any),
-    databaseURL: 'https://tarrawatch-b888f-default-rtdb.firebaseio.com',
+    databaseURL: "https://tarrawatch-b888f-default-rtdb.firebaseio.com",
   });
 }
 
 const db = getDatabase();
 
 export async function GET() {
-  try {
-    const hoy = new Date().toISOString().split('T')[0];
-    const lecturasRef = db.ref(`/lecturas/${hoy}`);
-    const snapshot = await lecturasRef.limitToLast(30).get();
+  const hoy = new Date();
+  const fecha = hoy.toISOString().split("T")[0];
+  const lecturasRef = db.ref(`/lecturas/${fecha}`);
+  const alertasRef = db.ref(`/alertas`);
 
-    const datos = snapshot.val();
-    if (!datos) return NextResponse.json({ message: 'Sin datos' }, { status: 404 });
+  const snapshot = await lecturasRef.limitToLast(1).once("value");
+  const alertasSnap = await alertasRef.once("value");
 
-    const valores = Object.values(datos) as any[];
+  const data = snapshot.val();
+  const alertas = alertasSnap.val();
 
-    let ciclosSeguidos = 0;
-    for (const lectura of valores) {
-      const lluvia = lectura.lluvia_porcentaje;
-      if (lluvia > 20) {
-        ciclosSeguidos++;
-      } else {
-        ciclosSeguidos = 0;
-      }
-    }
-
-    const prolongada = ciclosSeguidos >= 12 ? 'Sí' : 'No';
-
-    // Guardar resultado
-    await db.ref('/alertas/lluvia_prolongada').set(prolongada);
-
-    // ⚠️ Si hay lluvia prolongada, enviar notificación
-    if (prolongada === 'Sí') {
-      const tokensRef = db.ref('/tokens');
-      const tokensSnap = await tokensRef.get();
-      const tokensObj = tokensSnap.val();
-
-      if (tokensObj) {
-        for (const userId in tokensObj) {
-          const token = tokensObj[userId];
-          await getMessaging().send({
-            token,
-            notification: {
-              title: '🌧️ Lluvia Prolongada Detectada',
-              body: 'Se ha detectado lluvia continua en TerraWatch. Revisa el sistema.',
-            },
-          });
-          console.log(`📤 Notificación enviada a ${userId}`);
-        }
-      }
-    }
-
-    return NextResponse.json({
-      lluvia_prolongada: prolongada,
-      ciclosDetectados: ciclosSeguidos,
-    });
-  } catch (error) {
-    console.error('❌ Error evaluando lluvia prolongada:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+  if (!data || !alertas) {
+    return NextResponse.json({ msg: "No hay datos" }, { status: 404 });
   }
+
+  const hora = Object.keys(data)[0];
+  const lectura = Object.values(data)[0] as any;
+
+  const humedadSuelo = lectura.humedad_suelo_porcentaje || 0;
+  const lluvia = lectura.lluvia_porcentaje || 0;
+  const prolongada = alertas.lluvia_prolongada === "Sí";
+
+  let mensaje = "Condiciones óptimas.";
+  let tipo = "Información";
+  let nivel = "Bajo";
+  let sensores: string[] = [];
+
+  if (humedadSuelo < 30 && lluvia < 20) {
+    mensaje = "¡El suelo está muy seco y no llueve! Riego urgente recomendado.";
+    tipo = "Peligro";
+    nivel = "Alto";
+    sensores = ["humedad_suelo", "lluvia"];
+  } else if (humedadSuelo > 80 && lluvia > 80) {
+    mensaje = "El suelo está saturado y sigue lloviendo. Riesgo de encharcamiento.";
+    tipo = "Advertencia";
+    nivel = "Alto";
+    sensores = ["humedad_suelo", "lluvia"];
+  } else if (prolongada) {
+    mensaje = "Lluvia prolongada detectada. Monitorea el cultivo.";
+    tipo = "Alerta";
+    nivel = "Medio";
+    sensores = ["lluvia", "lluvia_prolongada"];
+  }
+
+  const path = `/notificaciones/${fecha}/${hora}`;
+  await db.ref(path).set({ mensaje, tipo, nivel, sensores });
+
+  // ✅ Enviar notificación push si el mensaje no es neutro
+  if (mensaje !== "Condiciones óptimas.") {
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/generarNotificaciones`, {
+      method: "POST",
+      body: JSON.stringify({ mensaje, tipo }),
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  return NextResponse.json({ mensaje, tipo, nivel, sensores });
 }
+

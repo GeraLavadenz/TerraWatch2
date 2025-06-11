@@ -42,3 +42,8 @@ next-env.d.ts
 
 # Firebase Admin SDK
 /lib/firebase/credentials.json
+
+# Ignorar entorno local
+.env
+.env.local
+.env.*.local
