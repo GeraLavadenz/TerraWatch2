@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getDatabase } from 'firebase-admin/database';
 import { getMessaging } from 'firebase-admin/messaging';
-import serviceAccount from '@/credentials.json';
+
 
 // Inicializar Firebase Admin
 if (!getApps().length) {

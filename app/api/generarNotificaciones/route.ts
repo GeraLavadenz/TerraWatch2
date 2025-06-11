@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
-import serviceAccount from "@/lib/firebase/credentials.json"; // O usa dotenv si ya migraste
+
+// ✅ Obtener credenciales desde variables de entorno
+const serviceAccount = {
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+};
 
 if (!getApps().length) {
   initializeApp({
@@ -24,7 +30,9 @@ export async function GET() {
   const data = snapshot.val();
   const alertas = alertasSnap.val();
 
-  if (!data || !alertas) return NextResponse.json({ msg: "No hay datos" }, { status: 404 });
+  if (!data || !alertas) {
+    return NextResponse.json({ msg: "No hay datos" }, { status: 404 });
+  }
 
   const hora = Object.keys(data)[0];
   const lectura = Object.values(data)[0] as any;

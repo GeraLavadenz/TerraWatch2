@@ -1,31 +1,26 @@
-'use client';
+'use client'
 
-import { useEffect } from 'react';
-import { solicitarPermisoYObtenerToken, escucharMensajes } from '@/lib/firebase-notifications';
-import { ref, set } from 'firebase/database';
-import { database } from '@/lib/firebase';
+import { useEffect } from 'react'
+import { database } from '@/lib/firebase'
+import { ref, set } from 'firebase/database'
 
-export default function NotificacionesFCM() {
+export default function NotificacionesPush() {
   useEffect(() => {
-    async function registrarToken() {
-      const token = await solicitarPermisoYObtenerToken();
-      if (token) {
-        console.log('✅ Token FCM obtenido:', token);
+    async function registrarSuscripcion() {
+      if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
-        const userId = typeof window !== 'undefined'
-          ? localStorage.getItem('usuarioId') || 'anonimo'
-          : 'anonimo';
+      const registro = await navigator.serviceWorker.register("/sw.js");
+      const suscripcion = await registro.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      });
 
-        await set(ref(database, `tokens/${userId}`), token);
-        console.log(`📥 Token guardado en tokens/${userId}`);
-      }
+      const userId = localStorage.getItem("usuarioId") || "anonimo";
+      await set(ref(database, `suscripciones/${userId}`), suscripcion.toJSON());
+      console.log("🔔 Suscripción registrada");
     }
 
-    registrarToken();
-
-    escucharMensajes((payload) => {
-      alert(`🔔 ${payload.notification?.title}\n${payload.notification?.body}`);
-    });
+    registrarSuscripcion();
   }, []);
 
   return null;
