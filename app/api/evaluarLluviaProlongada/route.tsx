@@ -2,33 +2,28 @@ import { NextResponse } from "next/server";
 import { initializeApp, cert, getApps, ServiceAccount } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 
-// ✅ Interfaz para tipar la lectura del sensor
 interface LecturaSensor {
   humedad_suelo_porcentaje?: number;
   lluvia_porcentaje?: number;
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
-// ✅ Configurar credenciales desde variables de entorno
 const serviceAccount: ServiceAccount = {
-  type: "service_account",
-  project_id: process.env.FB_PROJECT_ID!,
-  private_key_id: process.env.FB_PRIVATE_KEY_ID!,
-  private_key: process.env.FB_PRIVATE_KEY!.replace(/\\n/g, "\n"),
-  client_email: process.env.FB_CLIENT_EMAIL!,
-  client_id: process.env.FB_CLIENT_ID!,
-  auth_uri: "https://accounts.google.com/o/oauth2/auth",
-  token_uri: "https://oauth2.googleapis.com/token",
-  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_x509_cert_url: process.env.FB_CLIENT_CERT_URL!,
-  universe_domain: "googleapis.com",
+  project_id: process.env.FIREBASE_PROJECT_ID!,
+  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID!,
+  private_key: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, "\n"),
+  client_email: process.env.FIREBASE_CLIENT_EMAIL!,
+  client_id: process.env.FIREBASE_CLIENT_ID!,
+  auth_uri: process.env.FIREBASE_AUTH_URI,
+  token_uri: process.env.FIREBASE_TOKEN_URI,
+  auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
+  client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL!,
 };
 
-// ✅ Inicializar Firebase si no está ya inicializado
 if (!getApps().length) {
   initializeApp({
     credential: cert(serviceAccount),
-    databaseURL: "https://tarrawatch-b888f-default-rtdb.firebaseio.com",
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
   });
 }
 
@@ -43,7 +38,7 @@ export async function GET() {
   const snapshot = await lecturasRef.limitToLast(1).once("value");
   const alertasSnap = await alertasRef.once("value");
 
-  const data = snapshot.val() as Record<string, LecturaSensor> | null;
+  const data = snapshot.val();
   const alertas = alertasSnap.val();
 
   if (!data || !alertas) {
@@ -51,10 +46,10 @@ export async function GET() {
   }
 
   const hora = Object.keys(data)[0];
-  const lectura = data[hora];
+  const lectura = Object.values(data)[0] as LecturaSensor;
 
-  const humedadSuelo = lectura.humedad_suelo_porcentaje ?? 0;
-  const lluvia = lectura.lluvia_porcentaje ?? 0;
+  const humedadSuelo = lectura.humedad_suelo_porcentaje || 0;
+  const lluvia = lectura.lluvia_porcentaje || 0;
   const prolongada = alertas.lluvia_prolongada === "Sí";
 
   let mensaje = "Condiciones óptimas.";
