@@ -14,28 +14,36 @@ import {
 } from "@/components/ui/chart"
 
 const chartConfig = {
-  temperatura: { label: "Temperatura (°C)", color: "#60A1B0" }, // Celeste
-  humedad: { label: "Humedad (%)", color: "#5AA792" },          // Turquesa
-  lluvia: { label: "Lluvia (%)", color: "#6DBB74" },            // Verde
+  temperatura: { label: "Temperatura (°C)", color: "#60A1B0" },
+  humedad: { label: "Humedad Suelo (%)", color: "#5AA792" },
+  humedadAmb: { label: "Humedad Ambiente (%)", color: "#EAC66E" },
+  lluvia: { label: "Lluvia (%)", color: "#6DBB74" },
 } satisfies ChartConfig
 
 type SensorData = {
   date: string;
   temperatura: number;
   humedad: number;
+  humedadAmb: number;
   lluvia: number;
 }
 
 type ValorLectura = {
   temperatura_C?: number;
   humedad_suelo_porcentaje?: number;
+ humedad_ambiente?: number;
   lluvia_porcentaje?: number;
 }
 
 export function ComponentChartsInteractive() {
   const [chartData, setChartData] = React.useState<SensorData[]>([])
   const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("temperatura")
-  const [total, setTotal] = React.useState({ temperatura: 0, humedad: 0, lluvia: 0 })
+  const [total, setTotal] = React.useState({
+    temperatura: 0,
+    humedad: 0,
+    humedadAmb: 0,
+    lluvia: 0,
+  })
 
   React.useEffect(() => {
     const lecturasRef = ref(db, "lecturas")
@@ -52,6 +60,7 @@ export function ComponentChartsInteractive() {
             date: `${fecha} ${hora}`,
             temperatura: Number(valores?.temperatura_C) || 0,
             humedad: Number(valores?.humedad_suelo_porcentaje) || 0,
+            humedadAmb: Number(valores?.humedad_ambiente) || 0,
             lluvia: Number(valores?.lluvia_porcentaje) || 0,
           })
         })
@@ -64,9 +73,10 @@ export function ComponentChartsInteractive() {
         (acc, curr) => ({
           temperatura: acc.temperatura + curr.temperatura,
           humedad: acc.humedad + curr.humedad,
+          humedadAmb: acc.humedadAmb + curr.humedadAmb,
           lluvia: acc.lluvia + curr.lluvia,
         }),
-        { temperatura: 0, humedad: 0, lluvia: 0 }
+        { temperatura: 0, humedad: 0, humedadAmb: 0, lluvia: 0 }
       )
 
       setTotal(totals)
