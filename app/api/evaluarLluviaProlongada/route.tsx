@@ -1,33 +1,33 @@
 import { NextResponse } from "next/server";
-import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { initializeApp, cert, getApps, ServiceAccount } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 
 // ✅ Interfaz para tipar la lectura del sensor
 interface LecturaSensor {
   humedad_suelo_porcentaje?: number;
   lluvia_porcentaje?: number;
-  [key: string]: any; // Para campos adicionales no definidos
+  [key: string]: any;
 }
 
 // ✅ Configurar credenciales desde variables de entorno
-const serviceAccount = {
+const serviceAccount: ServiceAccount = {
   type: "service_account",
-  project_id: process.env.FB_PROJECT_ID,
-  private_key_id: process.env.FB_PRIVATE_KEY_ID,
-  private_key: process.env.FB_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-  client_email: process.env.FB_CLIENT_EMAIL,
-  client_id: process.env.FB_CLIENT_ID,
+  project_id: process.env.FB_PROJECT_ID!,
+  private_key_id: process.env.FB_PRIVATE_KEY_ID!,
+  private_key: process.env.FB_PRIVATE_KEY!.replace(/\\n/g, "\n"),
+  client_email: process.env.FB_CLIENT_EMAIL!,
+  client_id: process.env.FB_CLIENT_ID!,
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
   token_uri: "https://oauth2.googleapis.com/token",
   auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_x509_cert_url: process.env.FB_CLIENT_CERT_URL,
+  client_x509_cert_url: process.env.FB_CLIENT_CERT_URL!,
   universe_domain: "googleapis.com",
 };
 
 // ✅ Inicializar Firebase si no está ya inicializado
 if (!getApps().length) {
   initializeApp({
-    credential: cert(serviceAccount as any),
+    credential: cert(serviceAccount),
     databaseURL: "https://tarrawatch-b888f-default-rtdb.firebaseio.com",
   });
 }
@@ -82,7 +82,6 @@ export async function GET() {
   const path = `/notificaciones/${fecha}/${hora}`;
   await db.ref(path).set({ mensaje, tipo, nivel, sensores });
 
-  // ✅ Enviar notificación push si es necesario
   if (mensaje !== "Condiciones óptimas.") {
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/generarNotificaciones`, {
       method: "POST",

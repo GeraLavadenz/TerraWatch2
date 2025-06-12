@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
-import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { initializeApp, cert, getApps, ServiceAccount } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 
 // ✅ Tipado de la suscripción Web Push
@@ -12,31 +12,31 @@ interface PushSubscription {
   };
 }
 
-// ✅ Configurar Firebase Admin con credenciales desde variables de entorno
-const serviceAccount = {
+// ✅ Configurar Firebase Admin
+const serviceAccount: ServiceAccount = {
   type: "service_account",
-  project_id: process.env.FB_PROJECT_ID,
-  private_key_id: process.env.FB_PRIVATE_KEY_ID,
-  private_key: process.env.FB_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-  client_email: process.env.FB_CLIENT_EMAIL,
-  client_id: process.env.FB_CLIENT_ID,
+  project_id: process.env.FB_PROJECT_ID!,
+  private_key_id: process.env.FB_PRIVATE_KEY_ID!,
+  private_key: process.env.FB_PRIVATE_KEY!.replace(/\\n/g, "\n"),
+  client_email: process.env.FB_CLIENT_EMAIL!,
+  client_id: process.env.FB_CLIENT_ID!,
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
   token_uri: "https://oauth2.googleapis.com/token",
   auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_x509_cert_url: process.env.FB_CLIENT_CERT_URL,
+  client_x509_cert_url: process.env.FB_CLIENT_CERT_URL!,
   universe_domain: "googleapis.com",
 };
 
 if (!getApps().length) {
   initializeApp({
-    credential: cert(serviceAccount as any),
+    credential: cert(serviceAccount),
     databaseURL: "https://tarrawatch-b888f-default-rtdb.firebaseio.com",
   });
 }
 
 const db = getDatabase();
 
-// ✅ Configurar claves VAPID desde variables de entorno
+// ✅ Configurar claves VAPID
 webpush.setVapidDetails(
   "mailto:admin@terrawatch.com",
   process.env.VAPID_PUBLIC_KEY!,
@@ -46,10 +46,17 @@ webpush.setVapidDetails(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, message } = body as { title: string; message: string };
+    const { title, message } = body;
 
-    const tokensSnap = await db.ref("suscripciones").once("value");
-    const suscripciones = tokensSnap.val();
+    if (!title || !message) {
+      return NextResponse.json(
+        { error: "Faltan campos requeridos: title o message" },
+        { status: 400 }
+      );
+    }
+
+    const snapshot = await db.ref("suscripciones").once("value");
+    const suscripciones = snapshot.val();
 
     if (!suscripciones) {
       return NextResponse.json(
@@ -61,11 +68,11 @@ export async function POST(req: NextRequest) {
     const resultados: { userId: string; estado: string; error?: string }[] = [];
 
     for (const userId in suscripciones) {
-      const suscripcion = suscripciones[userId] as PushSubscription;
+      const sub: PushSubscription = suscripciones[userId];
 
       try {
         await webpush.sendNotification(
-          suscripcion,
+          sub,
           JSON.stringify({ title, body: message })
         );
         resultados.push({ userId, estado: "Enviado" });
@@ -81,7 +88,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ resultados });
   } catch (error) {
     return NextResponse.json(
-      { msg: "Error procesando solicitud", error: (error as Error).message },
+      {
+        msg: "Error procesando solicitud",
+        error: (error as Error).message,
+      },
       { status: 500 }
     );
   }
