@@ -1,20 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import webpush from "web-push";
-import { initializeApp, cert, getApps, ServiceAccount } from "firebase-admin/app";
+import { NextResponse } from "next/server";
+import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 
-// ✅ Tipado de la suscripción Web Push
-interface PushSubscription {
-  endpoint: string;
-  keys: {
-    auth: string;
-    p256dh: string;
-  };
+// ✅ Tipado para lectura de sensores
+interface LecturaSensor {
+  humedad_suelo_porcentaje?: number;
+  lluvia_porcentaje?: number;
+  [key: string]: any;
 }
 
-// ✅ Configurar Firebase Admin
-const serviceAccount: ServiceAccount = {
-  type: "service_account",
+// ✅ Tipado personalizado para credenciales Firebase
+interface FirebaseServiceAccount {
+  project_id: string;
+  private_key_id: string;
+  private_key: string;
+  client_email: string;
+  client_id: string;
+  auth_uri: string;
+  token_uri: string;
+  auth_provider_x509_cert_url: string;
+  client_x509_cert_url: string;
+}
+
+// ✅ Credenciales desde variables de entorno
+const serviceAccount: FirebaseServiceAccount = {
   project_id: process.env.FB_PROJECT_ID!,
   private_key_id: process.env.FB_PRIVATE_KEY_ID!,
   private_key: process.env.FB_PRIVATE_KEY!.replace(/\\n/g, "\n"),
@@ -24,9 +33,9 @@ const serviceAccount: ServiceAccount = {
   token_uri: "https://oauth2.googleapis.com/token",
   auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
   client_x509_cert_url: process.env.FB_CLIENT_CERT_URL!,
-  universe_domain: "googleapis.com",
 };
 
+// ✅ Inicializar Firebase Admin si no está ya inicializado
 if (!getApps().length) {
   initializeApp({
     credential: cert(serviceAccount),
@@ -36,63 +45,62 @@ if (!getApps().length) {
 
 const db = getDatabase();
 
-// ✅ Configurar claves VAPID
-webpush.setVapidDetails(
-  "mailto:admin@terrawatch.com",
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+export async function GET() {
+  const hoy = new Date();
+  const fecha = hoy.toISOString().split("T")[0];
+  const lecturasRef = db.ref(`/lecturas/${fecha}`);
+  const alertasRef = db.ref(`/alertas`);
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { title, message } = body;
+  const snapshot = await lecturasRef.limitToLast(1).once("value");
+  const alertasSnap = await alertasRef.once("value");
 
-    if (!title || !message) {
-      return NextResponse.json(
-        { error: "Faltan campos requeridos: title o message" },
-        { status: 400 }
-      );
-    }
+  const data = snapshot.val();
+  const alertas = alertasSnap.val();
 
-    const snapshot = await db.ref("suscripciones").once("value");
-    const suscripciones = snapshot.val();
-
-    if (!suscripciones) {
-      return NextResponse.json(
-        { msg: "No hay suscripciones registradas" },
-        { status: 404 }
-      );
-    }
-
-    const resultados: { userId: string; estado: string; error?: string }[] = [];
-
-    for (const userId in suscripciones) {
-      const sub: PushSubscription = suscripciones[userId];
-
-      try {
-        await webpush.sendNotification(
-          sub,
-          JSON.stringify({ title, body: message })
-        );
-        resultados.push({ userId, estado: "Enviado" });
-      } catch (err) {
-        resultados.push({
-          userId,
-          estado: "Error",
-          error: (err as Error).message,
-        });
-      }
-    }
-
-    return NextResponse.json({ resultados });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        msg: "Error procesando solicitud",
-        error: (error as Error).message,
-      },
-      { status: 500 }
-    );
+  if (!data || !alertas) {
+    return NextResponse.json({ msg: "No hay datos" }, { status: 404 });
   }
+
+  const hora = Object.keys(data)[0];
+  const lectura = Object.values(data)[0] as LecturaSensor;
+
+  const humedadSuelo = lectura.humedad_suelo_porcentaje || 0;
+  const lluvia = lectura.lluvia_porcentaje || 0;
+  const prolongada = alertas.lluvia_prolongada === "Sí";
+
+  let mensaje = "Condiciones óptimas.";
+  let tipo = "Información";
+  let nivel = "Bajo";
+  let sensores: string[] = [];
+
+  if (humedadSuelo < 30 && lluvia < 20) {
+    mensaje = "¡El suelo está muy seco y no llueve! Riego urgente recomendado.";
+    tipo = "Peligro";
+    nivel = "Alto";
+    sensores = ["humedad_suelo", "lluvia"];
+  } else if (humedadSuelo > 80 && lluvia > 80) {
+    mensaje = "El suelo está saturado y sigue lloviendo. Riesgo de encharcamiento.";
+    tipo = "Advertencia";
+    nivel = "Alto";
+    sensores = ["humedad_suelo", "lluvia"];
+  } else if (prolongada) {
+    mensaje = "Lluvia prolongada detectada. Monitorea el cultivo.";
+    tipo = "Alerta";
+    nivel = "Medio";
+    sensores = ["lluvia", "lluvia_prolongada"];
+  }
+
+  const path = `/notificaciones/${fecha}/${hora}`;
+  await db.ref(path).set({ mensaje, tipo, nivel, sensores });
+
+  // Enviar notificación push si no es mensaje neutro
+  if (mensaje !== "Condiciones óptimas.") {
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/generarNotificaciones`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: tipo, message: mensaje }),
+    });
+  }
+
+  return NextResponse.json({ mensaje, tipo, nivel, sensores });
 }
