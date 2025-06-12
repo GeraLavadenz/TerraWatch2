@@ -5,6 +5,7 @@ import Menu from '@/components/Menu'
 import Header from '@/components/header'
 import { AlertSection } from '@/components/alertSection'
 import { ComponentChartsInteractive } from '@/components/charts/historico/Bar Chart - Interactive'
+import {ChartLineMultiple} from '@/components/charts/historico/Line Chart - Interactive'
 
 function Historico() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -41,6 +42,9 @@ function Historico() {
           {/* Gráfico */}
           <div className="flex-1 overflow-auto mt-4">
             <ComponentChartsInteractive />
+          </div>
+          <div>
+            < ChartLineMultiple/>
           </div>
         </div>
 
