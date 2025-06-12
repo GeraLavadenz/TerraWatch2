@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Terminal, Droplet, CloudRain, AlertTriangle, ShieldAlert, Bell } from "lucide-react"
+import { Terminal, BellRing } from "lucide-react"
 import { database } from "@/lib/firebase"
 import { ref, onValue } from "firebase/database"
 import {
@@ -15,63 +15,55 @@ export function AlertSection() {
   const [lluviaProlongada, setLluviaProlongada] = useState("Cargando...")
   const [humedad, setHumedad] = useState("Cargando...")
   const [notificaciones, setNotificaciones] = useState<
-    { mensaje: string; tipo: string; nivel: string; sensores: string[]; hora?: string }[]
+    { hora: string; tipo: string; mensaje: string }[]
   >([])
 
   useEffect(() => {
-    const db = database;
+    const db = database
 
-    // 🌧️ Lluvia normal
+    // Lluvia
     onValue(ref(db, "alertas/lluvia"), (snap) =>
       setLluvia(snap.exists() ? snap.val() : "Sin datos")
-    );
+    )
 
-    // 🌧️ Lluvia prolongada con cambio
-    let valorAnterior: string | null = null;
+    // Lluvia prolongada
+    let valorAnterior: string | null = null
     onValue(ref(db, "alertas/lluvia_prolongada"), (snap) => {
       if (snap.exists()) {
-        const nuevoValor = snap.val();
+        const nuevoValor = snap.val()
         if (nuevoValor !== valorAnterior) {
-          setLluviaProlongada(nuevoValor);
-          valorAnterior = nuevoValor;
+          setLluviaProlongada(nuevoValor)
+          valorAnterior = nuevoValor
         }
       } else {
-        setLluviaProlongada("Sin datos");
+        setLluviaProlongada("Sin datos")
       }
-    });
+    })
 
-    // 🌱 Humedad
+    // Humedad
     onValue(ref(db, "alertas/humedad"), (snap) =>
       setHumedad(snap.exists() ? snap.val() : "Sin datos")
-    );
+    )
 
-    // 🔔 Notificaciones
-    const hoy = new Date().toISOString().split("T")[0];
-    const notiRef = ref(db, `notificaciones/${hoy}`);
+    // Notificaciones del día actual
+    const hoy = new Date().toISOString().split("T")[0]
+    const notiRef = ref(db, `notificaciones/${hoy}`)
     onValue(notiRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.val();
-        const lista = Object.entries(data).map(([hora, notif]: any) => ({
-          ...notif,
+      const val = snap.val()
+      if (val) {
+        const lista = Object.entries(val).map(([hora, datos]: any) => ({
           hora,
-        }));
-        const ordenadas = lista.reverse();
-        setNotificaciones(ordenadas);
+          tipo: datos.tipo || "Información",
+          mensaje: datos.mensaje || "Sin mensaje",
+        }))
+        // Ordenar de más reciente a más antigua
+        lista.sort((a, b) => (a.hora < b.hora ? 1 : -1))
+        setNotificaciones(lista)
       } else {
-        setNotificaciones([]);
+        setNotificaciones([])
       }
-    });
-
-  }, []);
-
-  const iconoSensor = (sensor: string) => {
-    switch (sensor) {
-      case "humedad_suelo": return <Droplet className="inline w-4 h-4 text-green-600 mx-1" />;
-      case "lluvia": return <CloudRain className="inline w-4 h-4 text-blue-600 mx-1" />;
-      case "lluvia_prolongada": return <AlertTriangle className="inline w-4 h-4 text-yellow-600 mx-1" />;
-      default: return <Terminal className="inline w-4 h-4 mx-1" />;
-    }
-  };
+    })
+  }, [])
 
   return (
     <div className="w-full">
@@ -79,6 +71,7 @@ export function AlertSection() {
         🚨 Alertas del sistema
       </h1>
 
+      {/* Sección lluvia */}
       <section className="mb-6">
         <h2 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
           🌧️ Lluvia
@@ -95,6 +88,7 @@ export function AlertSection() {
         </Alert>
       </section>
 
+      {/* Sección humedad */}
       <section className="mb-6">
         <h2 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
           🌱 Humedad del Suelo
@@ -106,25 +100,25 @@ export function AlertSection() {
         </Alert>
       </section>
 
-      {notificaciones.length > 0 && (
-        <section className="mt-6">
-          <h2 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
-            🔔 Notificaciones recientes
-          </h2>
-          {notificaciones.map((n, i) => (
-            <Alert key={i} className="mb-3 border-l-4">
-              <Bell className="h-4 w-4 text-orange-500" />
-              <AlertTitle>{n.tipo} ({n.nivel}) – {n.hora}</AlertTitle>
-              <AlertDescription>
-                {n.mensaje}{" "}
-                {n.sensores.map((s) => iconoSensor(s))}
-              </AlertDescription>
+      {/* Sección notificaciones */}
+      <section>
+        <h2 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
+          🔔 Notificaciones del Sistema
+        </h2>
+        {notificaciones.length === 0 ? (
+          <p className="text-sm text-gray-500">No hay notificaciones registradas hoy.</p>
+        ) : (
+          notificaciones.map((n, idx) => (
+            <Alert key={idx} className="mb-2">
+              <BellRing className="h-4 w-4 text-yellow-500" />
+              <AlertTitle>{n.tipo} - {n.hora}</AlertTitle>
+              <AlertDescription>{n.mensaje}</AlertDescription>
             </Alert>
-          ))}
-        </section>
-      )}
+          ))
+        )}
+      </section>
     </div>
-  );
+  )
 }
 
 // Panel fijo solo para pantallas grandes
