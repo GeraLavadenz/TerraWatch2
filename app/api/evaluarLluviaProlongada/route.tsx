@@ -2,7 +2,14 @@ import { NextResponse } from "next/server";
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 
-// Credenciales desde variables de entorno (.env.local o configuraciones de Vercel)
+// ✅ Interfaz para tipar la lectura del sensor
+interface LecturaSensor {
+  humedad_suelo_porcentaje?: number;
+  lluvia_porcentaje?: number;
+  [key: string]: any; // Para campos adicionales no definidos
+}
+
+// ✅ Configurar credenciales desde variables de entorno
 const serviceAccount = {
   type: "service_account",
   project_id: process.env.FB_PROJECT_ID,
@@ -17,6 +24,7 @@ const serviceAccount = {
   universe_domain: "googleapis.com",
 };
 
+// ✅ Inicializar Firebase si no está ya inicializado
 if (!getApps().length) {
   initializeApp({
     credential: cert(serviceAccount as any),
@@ -43,7 +51,7 @@ export async function GET() {
   }
 
   const hora = Object.keys(data)[0];
-  const lectura = Object.values(data)[0] as any;
+  const lectura = Object.values(data)[0] as LecturaSensor;
 
   const humedadSuelo = lectura.humedad_suelo_porcentaje || 0;
   const lluvia = lectura.lluvia_porcentaje || 0;
@@ -74,15 +82,14 @@ export async function GET() {
   const path = `/notificaciones/${fecha}/${hora}`;
   await db.ref(path).set({ mensaje, tipo, nivel, sensores });
 
-  // ✅ Enviar notificación push si el mensaje no es neutro
+  // ✅ Enviar notificación push si es necesario
   if (mensaje !== "Condiciones óptimas.") {
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/generarNotificaciones`, {
       method: "POST",
-      body: JSON.stringify({ mensaje, tipo }),
       headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: tipo, message: mensaje }),
     });
   }
 
   return NextResponse.json({ mensaje, tipo, nivel, sensores });
 }
-
