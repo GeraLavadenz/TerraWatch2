@@ -1,10 +1,9 @@
-// /app/api/enviarNotificacion/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 
-// Inicializar Firebase Admin con variables de entorno (NO JSON)
+// Inicializar Firebase Admin si aún no está inicializado
 if (!getApps().length) {
   initializeApp({
     credential: cert({
@@ -18,7 +17,7 @@ if (!getApps().length) {
 
 const db = getDatabase();
 
-// Configurar Web Push con claves VAPID desde .env.local
+// Configurar claves VAPID para Web Push
 webpush.setVapidDetails(
   "mailto:admin@terrawatch.com",
   process.env.VAPID_PUBLIC_KEY!,
@@ -26,36 +25,53 @@ webpush.setVapidDetails(
 );
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { title, message } = body;
+  try {
+    const body = await req.json();
+    const { title, message } = body;
 
-  // Leer todas las suscripciones desde Firebase Realtime Database
-  const tokensSnap = await db.ref("suscripciones").once("value");
-  const suscripciones = tokensSnap.val();
+    // Guardar notificación en Firebase
+    const ahora = new Date();
+    const fecha = ahora.toISOString().split("T")[0];
+    const hora = ahora.toTimeString().split(" ")[0].slice(0, 5); // HH:MM
 
-  if (!suscripciones) {
-    return NextResponse.json({ msg: "No hay suscripciones registradas" }, { status: 404 });
-  }
+    await db.ref(`notificaciones/${fecha}/${hora}`).set({
+      tipo: title,
+      mensaje: message,
+    });
 
-  const resultados = [];
+    // Enviar notificación push a todos los suscritos
+    const tokensSnap = await db.ref("suscripciones").once("value");
+    const suscripciones = tokensSnap.val();
 
-  for (const userId in suscripciones) {
-    const suscripcion = suscripciones[userId];
-
-    try {
-      await webpush.sendNotification(
-        suscripcion,
-        JSON.stringify({ title, body: message })
-      );
-      resultados.push({ userId, estado: "Enviado" });
-    } catch (err) {
-      resultados.push({
-        userId,
-        estado: "Error",
-        error: (err as Error).message,
-      });
+    if (!suscripciones) {
+      return NextResponse.json({ msg: "No hay suscripciones registradas" }, { status: 404 });
     }
-  }
 
-  return NextResponse.json({ resultados });
+    const resultados = [];
+
+    for (const userId in suscripciones) {
+      const suscripcion = suscripciones[userId];
+
+      try {
+        await webpush.sendNotification(
+          suscripcion,
+          JSON.stringify({ title, body: message })
+        );
+        resultados.push({ userId, estado: "Enviado" });
+      } catch (err) {
+        resultados.push({
+          userId,
+          estado: "Error",
+          error: (err as Error).message,
+        });
+      }
+    }
+
+    return NextResponse.json({ msg: "Notificación guardada y enviada", resultados });
+  } catch (error) {
+    return NextResponse.json(
+      { msg: "❌ Error al enviar o guardar notificación", error: String(error) },
+      { status: 500 }
+    );
+  }
 }
