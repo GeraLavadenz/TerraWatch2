@@ -6,7 +6,7 @@ import { getDatabase } from "firebase-admin/database";
 interface LecturaSensor {
   humedad_suelo_porcentaje?: number;
   lluvia_porcentaje?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // ✅ Configurar credenciales desde variables de entorno
@@ -43,7 +43,7 @@ export async function GET() {
   const snapshot = await lecturasRef.limitToLast(1).once("value");
   const alertasSnap = await alertasRef.once("value");
 
-  const data = snapshot.val();
+  const data = snapshot.val() as Record<string, LecturaSensor> | null;
   const alertas = alertasSnap.val();
 
   if (!data || !alertas) {
@@ -51,10 +51,10 @@ export async function GET() {
   }
 
   const hora = Object.keys(data)[0];
-  const lectura = Object.values(data)[0] as LecturaSensor;
+  const lectura = data[hora];
 
-  const humedadSuelo = lectura.humedad_suelo_porcentaje || 0;
-  const lluvia = lectura.lluvia_porcentaje || 0;
+  const humedadSuelo = lectura.humedad_suelo_porcentaje ?? 0;
+  const lluvia = lectura.lluvia_porcentaje ?? 0;
   const prolongada = alertas.lluvia_prolongada === "Sí";
 
   let mensaje = "Condiciones óptimas.";
