@@ -1,69 +1,80 @@
-"use client"
+""use client";
 
-import { useEffect, useState } from "react"
-import { Terminal, BellRing } from "lucide-react"
-import { database } from "@/lib/firebase"
-import { ref, onValue } from "firebase/database"
+import { useEffect, useState } from "react";
+import { Terminal, BellRing } from "lucide-react";
+import { database } from "@/lib/firebase";
+import { ref, onValue } from "firebase/database";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@/components/ui/alert"
+} from "@/components/ui/alert";
+
+// ✅ Tipo para notificación
+interface Notificacion {
+  hora: string;
+  tipo: string;
+  mensaje: string;
+}
+
+interface FirebaseNotificacion {
+  tipo?: string;
+  mensaje?: string;
+}
 
 export function AlertSection() {
-  const [lluvia, setLluvia] = useState("Cargando...")
-  const [lluviaProlongada, setLluviaProlongada] = useState("Cargando...")
-  const [humedad, setHumedad] = useState("Cargando...")
-  const [notificaciones, setNotificaciones] = useState<
-    { hora: string; tipo: string; mensaje: string }[]
-  >([])
+  const [lluvia, setLluvia] = useState("Cargando...");
+  const [lluviaProlongada, setLluviaProlongada] = useState("Cargando...");
+  const [humedad, setHumedad] = useState("Cargando...");
+  const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
 
   useEffect(() => {
-    const db = database
+    const db = database;
 
-    // Lluvia
-    onValue(ref(db, "alertas/lluvia"), (snap) =>
-      setLluvia(snap.exists() ? snap.val() : "Sin datos")
-    )
+    // Escuchar alerta de lluvia
+    onValue(ref(db, "alertas/lluvia"), (snap) => {
+      setLluvia(snap.exists() ? String(snap.val()) : "Sin datos");
+    });
 
-    // Lluvia prolongada
-    let valorAnterior: string | null = null
+    // Escuchar lluvia prolongada
+    let valorAnterior: string | null = null;
     onValue(ref(db, "alertas/lluvia_prolongada"), (snap) => {
       if (snap.exists()) {
-        const nuevoValor = snap.val()
+        const nuevoValor = String(snap.val());
         if (nuevoValor !== valorAnterior) {
-          setLluviaProlongada(nuevoValor)
-          valorAnterior = nuevoValor
+          setLluviaProlongada(nuevoValor);
+          valorAnterior = nuevoValor;
         }
       } else {
-        setLluviaProlongada("Sin datos")
+        setLluviaProlongada("Sin datos");
       }
-    })
+    });
 
-    // Humedad
-    onValue(ref(db, "alertas/humedad"), (snap) =>
-      setHumedad(snap.exists() ? snap.val() : "Sin datos")
-    )
+    // Escuchar humedad
+    onValue(ref(db, "alertas/humedad"), (snap) => {
+      setHumedad(snap.exists() ? String(snap.val()) : "Sin datos");
+    });
 
-    // Notificaciones del día actual
-    const hoy = new Date().toISOString().split("T")[0]
-    const notiRef = ref(db, `notificaciones/${hoy}`)
+    // Leer notificaciones del día actual
+    const hoy = new Date().toISOString().split("T")[0];
+    const notiRef = ref(db, `notificaciones/${hoy}`);
     onValue(notiRef, (snap) => {
-      const val = snap.val()
+      const val = snap.val() as Record<string, FirebaseNotificacion> | null;
+
       if (val) {
-        const lista = Object.entries(val).map(([hora, datos]: any) => ({
+        const lista: Notificacion[] = Object.entries(val).map(([hora, datos]) => ({
           hora,
-          tipo: datos.tipo || "Información",
-          mensaje: datos.mensaje || "Sin mensaje",
-        }))
-        // Ordenar de más reciente a más antigua
-        lista.sort((a, b) => (a.hora < b.hora ? 1 : -1))
-        setNotificaciones(lista)
+          tipo: datos.tipo ?? "Información",
+          mensaje: datos.mensaje ?? "Sin mensaje",
+        }));
+
+        lista.sort((a, b) => (a.hora < b.hora ? 1 : -1));
+        setNotificaciones(lista);
       } else {
-        setNotificaciones([])
+        setNotificaciones([]);
       }
-    })
-  }, [])
+    });
+  }, []);
 
   return (
     <div className="w-full">
@@ -108,8 +119,8 @@ export function AlertSection() {
         {notificaciones.length === 0 ? (
           <p className="text-sm text-gray-500">No hay notificaciones registradas hoy.</p>
         ) : (
-          notificaciones.map((n, idx) => (
-            <Alert key={idx} className="mb-2">
+          notificaciones.map((n) => (
+            <Alert key={n.hora} className="mb-2">
               <BellRing className="h-4 w-4 text-yellow-500" />
               <AlertTitle>{n.tipo} - {n.hora}</AlertTitle>
               <AlertDescription>{n.mensaje}</AlertDescription>
@@ -118,14 +129,13 @@ export function AlertSection() {
         )}
       </section>
     </div>
-  )
+  );
 }
 
-// Panel fijo solo para pantallas grandes
 export function AlertPanelFijo() {
   return (
     <div className="hidden md:block fixed top-16 right-0 w-64 h-[calc(100vh-4rem)] p-4 overflow-y-auto bg-white dark:bg-[#1a1a1a] border-l border-gray-300 dark:border-gray-700 shadow z-40">
       <AlertSection />
     </div>
-  )
+  );
 }
