@@ -6,7 +6,8 @@ import { getDatabase } from "firebase-admin/database";
 interface LecturaSensor {
   humedad_suelo_porcentaje?: number;
   lluvia_porcentaje?: number;
-  [key: string]: any;
+  temperatura_c?: number;
+  [clave: string]: number | undefined;
 }
 
 // ✅ Tipado personalizado para credenciales Firebase
@@ -22,7 +23,7 @@ interface FirebaseServiceAccount {
   client_x509_cert_url: string;
 }
 
-// ✅ Credenciales desde variables de entorno
+// ✅ Inicializar Firebase si no hay apps activas
 const serviceAccount: FirebaseServiceAccount = {
   project_id: process.env.FB_PROJECT_ID!,
   private_key_id: process.env.FB_PRIVATE_KEY_ID!,
@@ -35,7 +36,6 @@ const serviceAccount: FirebaseServiceAccount = {
   client_x509_cert_url: process.env.FB_CLIENT_CERT_URL!,
 };
 
-// ✅ Inicializar Firebase Admin si no está ya inicializado
 if (!getApps().length) {
   initializeApp({
     credential: cert(serviceAccount),
@@ -54,18 +54,18 @@ export async function GET() {
   const snapshot = await lecturasRef.limitToLast(1).once("value");
   const alertasSnap = await alertasRef.once("value");
 
-  const data = snapshot.val();
-  const alertas = alertasSnap.val();
+  const data = snapshot.val() as Record<string, LecturaSensor> | null;
+  const alertas = alertasSnap.val() as { lluvia_prolongada?: string } | null;
 
   if (!data || !alertas) {
     return NextResponse.json({ msg: "No hay datos" }, { status: 404 });
   }
 
   const hora = Object.keys(data)[0];
-  const lectura = Object.values(data)[0] as LecturaSensor;
+  const lectura = data[hora];
 
-  const humedadSuelo = lectura.humedad_suelo_porcentaje || 0;
-  const lluvia = lectura.lluvia_porcentaje || 0;
+  const humedadSuelo = lectura.humedad_suelo_porcentaje ?? 0;
+  const lluvia = lectura.lluvia_porcentaje ?? 0;
   const prolongada = alertas.lluvia_prolongada === "Sí";
 
   let mensaje = "Condiciones óptimas.";
@@ -93,7 +93,6 @@ export async function GET() {
   const path = `/notificaciones/${fecha}/${hora}`;
   await db.ref(path).set({ mensaje, tipo, nivel, sensores });
 
-  // Enviar notificación push si no es mensaje neutro
   if (mensaje !== "Condiciones óptimas.") {
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/generarNotificaciones`, {
       method: "POST",
