@@ -119,7 +119,7 @@ export function ComponentChartsInteractive() {
         </div>
       </CardHeader>
 
-      <CardContent className="px-2 sm:px-6">
+      <CardContent className="px-2 sm:px-5">
         <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
           <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
